@@ -3,16 +3,37 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use OpenApi\Annotations as OA;
 use App\Models\Product;
 use App\Models\TransactionDetail;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\Rule;
 
+/**
+ * Product Controller (Admin)
+ */
+
 class ProductController extends Controller
 {
     /**
      * List products (Admin)
+     * 
+     * @OA\Get(
+     *     path="/admin/products",
+     *     summary="List all products",
+     *     tags={"Products"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful response",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#\/components\/schemas\/Product"))
+     *         )
+     *     )
+     * )
+     * 
      */
     public function index(): JsonResponse
     {
@@ -24,6 +45,39 @@ class ProductController extends Controller
 
     /**
      * Store new product
+     * 
+     * @OA\Post(
+     *     path="/admin/products",
+     *     summary="Store new product",
+     *     tags={"Products"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         description="Product data",
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                 required={"category_id", "sku", "product_name", "price", "stock"},
+     *                 @OA\Property(property="category_id", type="integer", example=1),
+     *                 @OA\Property(property="sku", type="string", example="PROD-001"),
+     *                 @OA\Property(property="product_name", type="string", example="Product 1"),
+     *                 @OA\Property(property="description", type="string", example="Description 1"),
+     *                 @OA\Property(property="price", type="number", format="float", example=10000),
+     *                 @OA\Property(property="stock", type="integer", example=10)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Product created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Product created"),
+     *             @OA\Property(property="data", ref="#/components/schemas/Product")
+     *         )
+     *     )
+     * )
+     * 
      */
     public function store(Request $request): JsonResponse
     {
@@ -47,6 +101,28 @@ class ProductController extends Controller
 
     /**
      * Show product detail
+     * 
+     * @OA\Get(
+     *     path="/admin/products/{id}",
+     *     summary="Show product detail",
+     *     tags={"Products"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful response",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", ref="#\/components\/schemas\/Product")
+     *         )
+     *     )
+     * )
+     * 
      */
     public function show(int $id): JsonResponse
     {
@@ -60,6 +136,45 @@ class ProductController extends Controller
 
     /**
      * Update product
+     * 
+     * @OA\Put(
+     *     path="/admin/products/{id}",
+     *     summary="Update product",
+     *     tags={"Products"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         description="Product data to update",
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                 required={"category_id", "sku", "product_name", "price", "stock"},
+     *                 @OA\Property(property="category_id", type="integer", example=1),
+     *                 @OA\Property(property="sku", type="string", example="PROD-001"),
+     *                 @OA\Property(property="product_name", type="string", example="Product Updated"),
+     *                 @OA\Property(property="description", type="string", example="Description Updated"),
+     *                 @OA\Property(property="price", type="number", format="float", example=15000),
+     *                 @OA\Property(property="stock", type="integer", example=20)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Product updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Product updated"),
+     *             @OA\Property(property="data", ref="#/components/schemas/Product")
+     *         )
+     *     )
+     * )
+     * 
      */
     public function update(Request $request, int $id): JsonResponse
     {
@@ -90,6 +205,28 @@ class ProductController extends Controller
 
     /**
      * Delete product (safe)
+     * 
+     * @OA\Delete(
+     *     path="/admin/products/{id}",
+     *     summary="Delete product",
+     *     tags={"Products"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Product deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="message", type="string")
+     *         )
+     *     )
+     * )
+     * 
      */
     public function destroy(int $id): JsonResponse
     {
@@ -109,16 +246,6 @@ class ProductController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Product deleted',
-        ]);
-    }
-
-    public function available(): JsonResponse
-    {
-        return response()->json([
-            'success' => true,
-            'data' => Product::where('stock', '>', 0)
-                ->orderBy('product_name')
-                ->get(),
         ]);
     }
 }

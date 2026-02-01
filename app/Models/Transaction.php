@@ -7,6 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 class Transaction extends Model
 {
     public $timestamps = false;
+
+    protected $casts = [
+        'transaction_date' => 'datetime',
+    ];
     const STATUS_COMPLETED = 'completed';
     const STATUS_CANCELLED = 'cancelled';
     const STATUS_FAILED = 'failed';

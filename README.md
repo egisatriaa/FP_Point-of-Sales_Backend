@@ -1,59 +1,101 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Aplikasi Kasir Point of Sale (POS) Berbasis Web
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Repository ini berisi source code dan dokumentasi lengkap
+**Aplikasi Point of Sale (POS) berbasis web**.
 
-## About Laravel
+Dokumentasi dipisahkan berdasarkan target pembaca agar
+mudah dipahami oleh **pengguna non-teknis** maupun **developer**.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Silakan pilih dokumentasi sesuai kebutuhan Anda.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+<details>
+<summary><strong>View Simple Docs</strong></summary>
 
-## Learning Laravel
+Dokumentasi ini ditujukan untuk:
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+- Owner / stakeholder
+- Dosen / reviewer
+- Pengguna non-teknis
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Berisi gambaran umum sistem, fitur utama,
+alur penggunaan, dan manfaat aplikasi.
 
-## Laravel Sponsors
+### Dokumen Utama
+- 👉 [Simple Documentation](docs/README_SIMPLE.md)
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Fitur Berdasarkan Peran
+- [Semua Fitur Sistem](docs/All-Feature.md)
+- [Fitur Admin](docs/Admin-Feature.md)
+- [Fitur Kasir](docs/Cashier-Feature.md)
+- [Fitur Publik / Pelanggan](docs/Public-Feature.md)
 
-### Premium Partners
+</details>
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+---
 
-## Contributing
+<details>
+<summary><strong>View Technical Docs</strong></summary>
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Dokumentasi teknis ditujukan untuk:
 
-## Code of Conduct
+- Developer
+- Technical reviewer
+- Maintainer sistem
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Berisi arsitektur sistem, alur teknis,
+aturan bisnis, dan dokumentasi database.
 
-## Security Vulnerabilities
+### Dokumen Teknis Utama
+- 👉 [Technical Documentation](docs/README_TECHNICAL.md)
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Database & Data Design
+- [Database Schema (DDL)](docs/DDL.md)
 
-## License
+### Flow & Pengujian
+- [Flow Transaksi & Test Scenario](docs/flow-test.md)
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### Catatan Tambahan
+- [Dokumentasi Tambahan & Catatan Teknis](docs/Tambahan.md)
+
+---
+
+## Instalasi dan Konfigurasi
+
+Panduan instalasi lengkap tersedia
+di dokumentasi teknis.
+
+Mencakup:
+- Requirement server
+- Setup environment
+- Migrasi database
+- Seeder awal
+- Menjalankan backend dan frontend
+
+Silakan lihat:
+👉 [Technical Documentation](docs/README_TECHNICAL.md)
+
+---
+
+## Support dan Kontribusi
+
+Jika menemukan bug atau ingin berdiskusi teknis:
+
+- Gunakan **GitHub Issues**
+- Sertakan langkah reproduksi yang jelas
+- Lampirkan konteks dokumentasi (DDL / Flow / Feature)
+
+---
+
+## Lisensi
+
+Project ini dikembangkan sebagai sistem
+**Point of Sale (POS) berbasis web**
+menggunakan teknologi open-source
+seperti Laravel dan MySQL.
+
+Hak cipta dan lisensi mengikuti
+kebijakan pemilik project.
+
+</details>
