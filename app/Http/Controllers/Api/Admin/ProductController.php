@@ -10,12 +10,18 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\Rule;
 
+use App\Services\ImageUploadService;
+
 /**
  * Product Controller (Admin)
  */
 
 class ProductController extends Controller
 {
+    public function __construct(
+        protected ImageUploadService $imageUploadService
+    ) {}
+
     /**
      * List products (Admin)
      * 
@@ -37,6 +43,8 @@ class ProductController extends Controller
      */
     public function index(): JsonResponse
     {
+        // Mutator/Accessor for image URL can be added in Model if needed
+        // For now, we return the path stored in DB
         return response()->json([
             'success' => true,
             'data' => Product::with('category')->orderBy('id')->get(),
@@ -55,7 +63,7 @@ class ProductController extends Controller
      *         required=true,
      *         description="Product data",
      *         @OA\MediaType(
-     *             mediaType="application/json",
+     *             mediaType="multipart/form-data",
      *             @OA\Schema(
      *                 required={"category_id", "sku", "product_name", "price", "stock"},
      *                 @OA\Property(property="category_id", type="integer", example=1),
@@ -63,7 +71,8 @@ class ProductController extends Controller
      *                 @OA\Property(property="product_name", type="string", example="Product 1"),
      *                 @OA\Property(property="description", type="string", example="Description 1"),
      *                 @OA\Property(property="price", type="number", format="float", example=10000),
-     *                 @OA\Property(property="stock", type="integer", example=10)
+     *                 @OA\Property(property="stock", type="integer", example=10),
+     *                 @OA\Property(property="image", type="string", format="binary")
      *             )
      *         )
      *     ),
@@ -88,7 +97,15 @@ class ProductController extends Controller
             'description'   => ['nullable', 'string'],
             'price'         => ['required', 'numeric', 'min:0'],
             'stock'         => ['required', 'integer', 'min:0'],
+            'image'         => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
         ]);
+
+        if ($request->hasFile('image')) {
+            $path = $this->imageUploadService->upload($request->file('image'));
+            $validated['img_product'] = $path; // Map to correct DB column
+        }
+
+        unset($validated['image']); // Remove 'image' from array as DB column is 'img_product'
 
         $product = Product::create($validated);
 
@@ -137,9 +154,9 @@ class ProductController extends Controller
     /**
      * Update product
      * 
-     * @OA\Put(
+     * @OA\Post(
      *     path="/admin/products/{id}",
-     *     summary="Update product",
+     *     summary="Update product (Method Spoofing: _method=PUT)",
      *     tags={"Products"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
@@ -152,15 +169,17 @@ class ProductController extends Controller
      *         required=true,
      *         description="Product data to update",
      *         @OA\MediaType(
-     *             mediaType="application/json",
+     *             mediaType="multipart/form-data",
      *             @OA\Schema(
-     *                 required={"category_id", "sku", "product_name", "price", "stock"},
+     *                 required={"category_id", "sku", "product_name", "price", "stock", "_method"},
+     *                 @OA\Property(property="_method", type="string", example="PUT"),
      *                 @OA\Property(property="category_id", type="integer", example=1),
      *                 @OA\Property(property="sku", type="string", example="PROD-001"),
      *                 @OA\Property(property="product_name", type="string", example="Product Updated"),
      *                 @OA\Property(property="description", type="string", example="Description Updated"),
      *                 @OA\Property(property="price", type="number", format="float", example=15000),
-     *                 @OA\Property(property="stock", type="integer", example=20)
+     *                 @OA\Property(property="stock", type="integer", example=20),
+     *                 @OA\Property(property="image", type="string", format="binary")
      *             )
      *         )
      *     ),
@@ -192,7 +211,20 @@ class ProductController extends Controller
             'description'   => ['nullable', 'string'],
             'price'         => ['required', 'numeric', 'min:0'],
             'stock'         => ['required', 'integer', 'min:0'],
+            'image'         => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
         ]);
+
+        if ($request->hasFile('image')) {
+            // Upload new image and delete old one if exists
+            $path = $this->imageUploadService->upload(
+                $request->file('image'),
+                'products',
+                $product->img_product
+            );
+            $validated['img_product'] = $path;
+        }
+
+        unset($validated['image']);
 
         $product->update($validated);
 
@@ -240,6 +272,9 @@ class ProductController extends Controller
                 'message' => 'Product cannot be deleted because it has transaction history',
             ], 422);
         }
+
+        // Delete image from storage
+        $this->imageUploadService->delete($product->img_product);
 
         $product->delete();
 

@@ -60,7 +60,7 @@
                     "description": "Product data",
                     "required": true,
                     "content": {
-                        "application/json": {
+                        "multipart/form-data": {
                             "schema": {
                                 "required": [
                                     "category_id",
@@ -94,6 +94,10 @@
                                     "stock": {
                                         "type": "integer",
                                         "example": 10
+                                    },
+                                    "image": {
+                                        "type": "string",
+                                        "format": "binary"
                                     }
                                 },
                                 "type": "object"
@@ -177,13 +181,13 @@
                     }
                 ]
             },
-            "put": {
+            "post": {
                 "tags": [
                     "Products"
                 ],
-                "summary": "Update product",
+                "summary": "Update product (Method Spoofing: _method=PUT)",
                 "description": "Update product",
-                "operationId": "7e0e10532f41fc68eb72e8b60f56deb5",
+                "operationId": "59e2f7e48a149f2b6250cc0ca12bb570",
                 "parameters": [
                     {
                         "name": "id",
@@ -198,16 +202,21 @@
                     "description": "Product data to update",
                     "required": true,
                     "content": {
-                        "application/json": {
+                        "multipart/form-data": {
                             "schema": {
                                 "required": [
                                     "category_id",
                                     "sku",
                                     "product_name",
                                     "price",
-                                    "stock"
+                                    "stock",
+                                    "_method"
                                 ],
                                 "properties": {
+                                    "_method": {
+                                        "type": "string",
+                                        "example": "PUT"
+                                    },
                                     "category_id": {
                                         "type": "integer",
                                         "example": 1
@@ -232,6 +241,10 @@
                                     "stock": {
                                         "type": "integer",
                                         "example": 20
+                                    },
+                                    "image": {
+                                        "type": "string",
+                                        "format": "binary"
                                     }
                                 },
                                 "type": "object"
@@ -1337,6 +1350,77 @@
                 }
             }
         },
+        "/profile": {
+            "post": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Update user profile",
+                "description": "Update user profile",
+                "operationId": "42803079b1b23a321f57eae40c98b303",
+                "requestBody": {
+                    "description": "Profile data",
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    },
+                                    "image": {
+                                        "description": "Profile Image",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Profile updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Profile updated"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/User"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/receipt/{transaction_code}": {
             "get": {
                 "tags": [
@@ -1624,6 +1708,59 @@
                     }
                 },
                 "type": "object"
+            },
+            "User": {
+                "title": "User",
+                "description": "User model",
+                "required": [
+                    "id",
+                    "name",
+                    "email",
+                    "role_id",
+                    "is_active"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "John Doe"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "john@example.com"
+                    },
+                    "role_id": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "profile_img": {
+                        "type": "string",
+                        "example": "uploads/profiles/uuid.jpg",
+                        "nullable": true
+                    },
+                    "last_login_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
             }
         },
         "securitySchemes": {
@@ -1666,6 +1803,10 @@
         {
             "name": "Products Public",
             "description": "Products Public"
+        },
+        {
+            "name": "Profile",
+            "description": "Profile"
         },
         {
             "name": "Public Receipts",

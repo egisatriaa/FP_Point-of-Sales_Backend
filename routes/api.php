@@ -26,6 +26,13 @@ Route::post('/logout', [AuthController::class, 'logout']);
 
 /*
 |--------------------------------------------------------------------------
+| Profile (Authenticated)
+|--------------------------------------------------------------------------
+*/
+Route::middleware('auth:sanctum')->post('/profile', [\App\Http\Controllers\Api\ProfileController::class, 'update']);
+
+/*
+|--------------------------------------------------------------------------
 | Public Receipt (Self Order)
 |--------------------------------------------------------------------------
 */

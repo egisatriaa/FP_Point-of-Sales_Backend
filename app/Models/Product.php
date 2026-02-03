@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 use OpenApi\Annotations as OA;
 
@@ -25,6 +26,7 @@ use OpenApi\Annotations as OA;
  */
 class Product extends Model
 {
+    use SoftDeletes;
     protected $fillable = [
         'category_id',
         'sku',
@@ -32,6 +34,7 @@ class Product extends Model
         'description',
         'price',
         'stock',
+        'img_product',
     ];
 
     protected $casts = [
