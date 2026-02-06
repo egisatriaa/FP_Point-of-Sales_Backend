@@ -16,7 +16,7 @@ class RoleRestrictionTest extends TestCase
 
     private function createUserWithRole(string $roleName): string
     {
-        $role = Role::create(['role_name' => $roleName]);
+        $role = Role::firstOrCreate(['role_name' => $roleName]);
 
         $user = User::create([
             'name' => ucfirst($roleName),

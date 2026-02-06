@@ -37,7 +37,7 @@ use OpenApi\Annotations as OA;
  */
 class User extends Authenticatable
 {
-    use HasApiTokens, SoftDeletes;
+    use HasApiTokens, SoftDeletes, \Illuminate\Database\Eloquent\Factories\HasFactory;
 
     protected $fillable = [
         'name',

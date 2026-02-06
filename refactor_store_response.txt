@@ -1,0 +1,49 @@
+PENJELASAN PERBAIKAN CART RESPONSE (ADD TO CART)
+================================================
+
+1. LOGIC REFACTOR
+-----------------
+Saya telah mengubah method `store()` dan `index()` di `CartController.php`.
+Sebelumnya, `store()` hanya mengembalikan `data: null`.
+Sekarang, saya membuat helper private method `buildCartResponse($cart)` yang digunakan bersama oleh kedua method tersebut.
+
+2. KEUNTUNGAN
+-------------
+- **Real-time UI Update**: Frontend (Next.js) tidak perlu melakukan request kedua (`GET /cart`) setelah berhasil add-to-cart. Cukup ambil object `data` dari response POST dan update global state cart.
+- **Konsistensi**: Format data antara saat load awal (`GET`) dan saat update (`POST`) dijamin identik karena menggunakan helper yang sama.
+- **Performa**: Mengurangi 1 RTT (Round Trip Time) ke server setiap kali user menekan tombol beli.
+
+3. STRUKTUR RESPONSE BARU (POST /cart)
+--------------------------------------
+Sekarang mengembalikan:
+```json
+{
+    "success": true,
+    "message": "Product added to cart",
+    "data": {
+        "cart_id": 1,
+        "status": "active",
+        "total_quantity": 5,
+        "total_amount": 150000,
+        "items": [
+            {
+                "cart_item_id": 10,
+                "product_id": 1,
+                "product_name": "Kopi Susu",
+                "price_snapshot": 15000,
+                "quantity": 2, // Quantity terbaru
+                "subtotal": 30000
+            },
+            // ... items lain
+        ]
+    }
+}
+```
+
+4. CARA TEST (Manual)
+---------------------
+1. `POST /api/cart` dengan Product A.
+2. Periksa response body. Field `data` tidak boleh item null. Harus berisi object cart lengkap.
+3. Cek `items` di dalam array data, pastikan produk yang baru di-add muncul di sana dengan quantity yang benar.
+
+Refactor selesai. Code aman untuk dipakai.

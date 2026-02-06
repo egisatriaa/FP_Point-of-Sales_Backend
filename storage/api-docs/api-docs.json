@@ -12,6 +12,386 @@
         }
     ],
     "paths": {
+        "/admin/dashboard/stats": {
+            "get": {
+                "tags": [
+                    "Admin Dashboard"
+                ],
+                "summary": "Get dashboard statistics (Global)",
+                "operationId": "77273e000c9781324660444bf05b91fd",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "day",
+                                "week",
+                                "month",
+                                "year"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "success": true,
+                                    "message": "Success",
+                                    "data": {
+                                        "total_sales": 1500000,
+                                        "total_transactions": 25,
+                                        "from": "2026-02-01 00:00:00",
+                                        "to": "2026-02-28 23:59:59"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/dashboard/chart": {
+            "get": {
+                "tags": [
+                    "Admin Dashboard"
+                ],
+                "summary": "Get dashboard chart data (Global)",
+                "operationId": "fc4baa118572c98b43d182521ecda19e",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "day",
+                                "week",
+                                "month",
+                                "year"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/dashboard/recent-sales": {
+            "get": {
+                "tags": [
+                    "Admin Dashboard"
+                ],
+                "summary": "Get recent sales (Global)",
+                "operationId": "a694e1cd0de00b073ae8e534f01f9c2f",
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 5
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/categories": {
+            "get": {
+                "tags": [
+                    "Admin Categories"
+                ],
+                "summary": "List all categories",
+                "operationId": "c9d370a5ffd5b98edbb40db5be419cee",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Category"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Categories"
+                ],
+                "summary": "Create a new category",
+                "operationId": "41138cf423f5e7f784ea5dd54c193994",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "category_name"
+                                ],
+                                "properties": {
+                                    "category_name": {
+                                        "type": "string",
+                                        "example": "Food"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Category created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Category"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/categories/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Categories"
+                ],
+                "summary": "Get category by ID",
+                "operationId": "f033e9ad2dbf8325ecdbe9823c15749a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Category"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Category not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Categories"
+                ],
+                "summary": "Update a category",
+                "operationId": "21b9db60411febf91a3df563499799fb",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "category_name"
+                                ],
+                                "properties": {
+                                    "category_name": {
+                                        "type": "string",
+                                        "example": "Updated/Food"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Category updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Category"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Category not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Categories"
+                ],
+                "summary": "Delete a category",
+                "operationId": "6e07250e2afdb687f81f9d036eb5f43f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Category deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Category deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Category not found"
+                    },
+                    "422": {
+                        "description": "Cannot delete category with associated products"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/admin/products": {
             "get": {
                 "tags": [
@@ -181,13 +561,13 @@
                     }
                 ]
             },
-            "post": {
+            "put": {
                 "tags": [
                     "Products"
                 ],
-                "summary": "Update product (Method Spoofing: _method=PUT)",
+                "summary": "Update product",
                 "description": "Update product",
-                "operationId": "59e2f7e48a149f2b6250cc0ca12bb570",
+                "operationId": "7e0e10532f41fc68eb72e8b60f56deb5",
                 "parameters": [
                     {
                         "name": "id",
@@ -827,43 +1207,76 @@
                 "tags": [
                     "Cart"
                 ],
-                "summary": "Get cart items",
-                "operationId": "107874e2d7ed0fc27c1696ed20a66f99",
+                "summary": "Get active cart items",
+                "description": "Mengambil data cart aktif beserta item produk di dalamnya.",
+                "operationId": "4ce4b12a945d08cfc1d125292496fae5",
                 "responses": {
                     "200": {
-                        "description": "Cart items retrieved successfully",
+                        "description": "Cart retrieved successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "success": {
-                                            "type": "boolean"
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
                                         },
                                         "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "cart_id": {
-                                                        "type": "integer"
-                                                    },
-                                                    "product_id": {
-                                                        "type": "integer"
-                                                    },
-                                                    "product_name": {
-                                                        "type": "string"
-                                                    },
-                                                    "price": {
-                                                        "type": "number"
-                                                    },
-                                                    "quantity": {
-                                                        "type": "integer"
-                                                    },
-                                                    "subtotal": {
-                                                        "type": "number"
-                                                    }
+                                            "properties": {
+                                                "cart_id": {
+                                                    "type": "integer",
+                                                    "example": 1
                                                 },
-                                                "type": "object"
-                                            }
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "active"
+                                                },
+                                                "total_quantity": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "total_amount": {
+                                                    "type": "number",
+                                                    "example": 150000
+                                                },
+                                                "items": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "cart_item_id": {
+                                                                "type": "integer",
+                                                                "example": 10
+                                                            },
+                                                            "product_id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "product_name": {
+                                                                "type": "string",
+                                                                "example": "Kopi Susu"
+                                                            },
+                                                            "price_snapshot": {
+                                                                "type": "number",
+                                                                "example": 15000
+                                                            },
+                                                            "quantity": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            },
+                                                            "subtotal": {
+                                                                "type": "number",
+                                                                "example": 30000
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -883,9 +1296,9 @@
                     "Cart"
                 ],
                 "summary": "Add product to cart",
-                "operationId": "004685f9d3a83524c1c9b43da657a21f",
+                "description": "Menambahkan produk ke cart aktif. Jika produk sudah ada, quantity akan bertambah (increment). Response berisi data cart LENGKAP terbaru.",
+                "operationId": "a00546e18539df569ba956ecc9c323a7",
                 "requestBody": {
-                    "description": "Product to add to cart",
                     "required": true,
                     "content": {
                         "application/json": {
@@ -901,7 +1314,7 @@
                                     },
                                     "quantity": {
                                         "type": "integer",
-                                        "example": 2
+                                        "example": 1
                                     }
                                 },
                                 "type": "object"
@@ -910,7 +1323,7 @@
                     }
                 },
                 "responses": {
-                    "201": {
+                    "200": {
                         "description": "Cart updated successfully",
                         "content": {
                             "application/json": {
@@ -922,33 +1335,30 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Cart updated"
+                                            "example": "Product added to cart"
                                         },
                                         "data": {
+                                            "description": "Full Cart Object (Same as GET /cart)",
                                             "properties": {
                                                 "cart_id": {
                                                     "type": "integer",
                                                     "example": 1
                                                 },
-                                                "product_id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "product_name": {
+                                                "status": {
                                                     "type": "string",
-                                                    "example": "Product 1"
+                                                    "example": "active"
                                                 },
-                                                "price": {
-                                                    "type": "number",
-                                                    "example": 10000
-                                                },
-                                                "quantity": {
+                                                "total_quantity": {
                                                     "type": "integer",
-                                                    "example": 2
+                                                    "example": 5
                                                 },
-                                                "subtotal": {
+                                                "total_amount": {
                                                     "type": "number",
-                                                    "example": 20000
+                                                    "example": 150000
+                                                },
+                                                "items": {
+                                                    "type": "array",
+                                                    "items": {}
                                                 }
                                             },
                                             "type": "object"
@@ -971,25 +1381,11 @@
                     "Cart"
                 ],
                 "summary": "Clear cart",
-                "operationId": "7ae1205685cc453cf4038f8478b90453",
+                "description": "Menghapus semua item di cart aktif user.",
+                "operationId": "f1b86ec2d6df07dc417845e7af8f096e",
                 "responses": {
                     "200": {
-                        "description": "Cart cleared successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean"
-                                        },
-                                        "message": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Cart cleared successfully"
                     }
                 },
                 "security": [
@@ -1005,30 +1401,202 @@
                     "Cart"
                 ],
                 "summary": "Remove item from cart",
-                "operationId": "fc6e316dd1b9f0aa171b5980ce8561da",
+                "description": "Menghapus spesifik item dari cart berdasarkan cart_item_id.",
+                "operationId": "12b948d44f40ba890148fb7959afa947",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
+                        "description": "ID dari Cart Item (bukan Product ID)",
                         "required": true,
                         "schema": {
-                            "type": "integer",
-                            "example": 1
+                            "type": "integer"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Item removed successfully",
+                        "description": "Item removed successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/cashier/dashboard/stats": {
+            "get": {
+                "tags": [
+                    "Cashier Dashboard"
+                ],
+                "summary": "Get dashboard statistics (Personal)",
+                "operationId": "c54068d1dc74f635a2d44f97fe3e163b",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "day",
+                                "week",
+                                "month",
+                                "year"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "success": true,
+                                    "message": "Success",
+                                    "data": {
+                                        "total_sales": 500000,
+                                        "total_transactions": 5,
+                                        "from": "2026-02-01 00:00:00",
+                                        "to": "2026-02-28 23:59:59"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/cashier/dashboard/chart": {
+            "get": {
+                "tags": [
+                    "Cashier Dashboard"
+                ],
+                "summary": "Get dashboard chart data (Personal)",
+                "operationId": "8042fb3f618a4a17db1db7125474ed10",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "day",
+                                "week",
+                                "month",
+                                "year"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/cashier/dashboard/recent-sales": {
+            "get": {
+                "tags": [
+                    "Cashier Dashboard"
+                ],
+                "summary": "Get recent sales (Personal)",
+                "operationId": "8bea91dad96e87fe8bedfb18f0d94f46",
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 5
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/cashier/categories": {
+            "get": {
+                "tags": [
+                    "Cashier Categories"
+                ],
+                "summary": "List all categories",
+                "operationId": "08c926345289348b0aa5be26980703e1",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "success": {
-                                            "type": "boolean"
+                                            "type": "boolean",
+                                            "example": true
                                         },
                                         "message": {
-                                            "type": "string"
+                                            "type": "string",
+                                            "example": "Success"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Category"
+                                            }
                                         }
                                     },
                                     "type": "object"
@@ -1049,21 +1617,29 @@
                 "tags": [
                     "Checkout"
                 ],
-                "summary": "Checkout cart items",
-                "operationId": "3a9885cd119f4f88d6d05caaef9129cf",
+                "summary": "Checkout Active Cart",
+                "description": "Memproses checkout dari cart yang sedang aktif (milik user login). Stock akan berkurang dan status cart menjadi 'completed'.",
+                "operationId": "a7aa78bfe27795dc0878a1e9466ed574",
                 "requestBody": {
-                    "description": "Checkout payment details",
+                    "description": "Checkout Payment Data",
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "payment_amount"
+                                    "payment_method",
+                                    "paid_amount"
                                 ],
                                 "properties": {
-                                    "payment_amount": {
+                                    "payment_method": {
+                                        "description": "Metode pembayaran (cash/qris)",
+                                        "type": "string",
+                                        "example": "cash"
+                                    },
+                                    "paid_amount": {
+                                        "description": "Uang yang dibayarkan",
                                         "type": "number",
-                                        "example": 100000
+                                        "example": 50000
                                     }
                                 },
                                 "type": "object"
@@ -1072,8 +1648,8 @@
                     }
                 },
                 "responses": {
-                    "201": {
-                        "description": "Transaction completed successfully",
+                    "200": {
+                        "description": "Checkout Successful (Transaction Created)",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1084,29 +1660,35 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Transaction completed"
+                                            "example": "Checkout berhasil"
                                         },
                                         "data": {
                                             "properties": {
                                                 "transaction_id": {
                                                     "type": "integer",
-                                                    "example": 1
+                                                    "example": 101
                                                 },
                                                 "transaction_code": {
                                                     "type": "string",
-                                                    "example": "TRX-123456"
+                                                    "example": "TRX-2026-XYZ"
                                                 },
                                                 "total_amount": {
                                                     "type": "number",
-                                                    "example": 90000
+                                                    "example": 45000
                                                 },
-                                                "payment_amount": {
+                                                "paid_amount": {
                                                     "type": "number",
-                                                    "example": 100000
+                                                    "example": 50000
                                                 },
                                                 "change_amount": {
                                                     "type": "number",
-                                                    "example": 10000
+                                                    "example": 5000
+                                                },
+                                                "items": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
                                                 }
                                             },
                                             "type": "object"
@@ -1116,6 +1698,12 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "description": "Bad Request (Cart empty, stock insufficient, payment deficient)"
+                    },
+                    "409": {
+                        "description": "Conflict (Stock changed during checkout)"
                     }
                 },
                 "security": [
@@ -1132,7 +1720,7 @@
                 ],
                 "summary": "Get cashier transaction list",
                 "description": "Internal transaction list (not receipt)",
-                "operationId": "4a8ff694f27dd1ed68e486b6a3167574",
+                "operationId": "b8742bd1a2e5844ab15885ed01163c50",
                 "parameters": [
                     {
                         "name": "Accept",
@@ -1144,9 +1732,38 @@
                         }
                     },
                     {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Filter by transaction_code (LIKE)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "description": "Filter start date (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "description": "Filter end date (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
                         "name": "period",
                         "in": "query",
-                        "description": "day | week | month | year",
+                        "description": "day | week | month | year (Legacy)",
                         "required": false,
                         "schema": {
                             "type": "string"
@@ -1155,7 +1772,7 @@
                     {
                         "name": "start_date",
                         "in": "query",
-                        "description": "Custom start date (YYYY-MM-DD)",
+                        "description": "Custom start date (Legacy)",
                         "required": false,
                         "schema": {
                             "type": "string",
@@ -1165,7 +1782,7 @@
                     {
                         "name": "end_date",
                         "in": "query",
-                        "description": "Custom end date (YYYY-MM-DD)",
+                        "description": "Custom end date (Legacy)",
                         "required": false,
                         "schema": {
                             "type": "string",
@@ -1227,7 +1844,7 @@
                 ],
                 "summary": "Get cashier transaction detail",
                 "description": "Show detail of a transaction created by the authenticated cashier",
-                "operationId": "cf79d3073abe425cfe1adc8317ee9c01",
+                "operationId": "5b398989284b4a4543b9b4915d8342e8",
                 "parameters": [
                     {
                         "name": "Accept",
@@ -1300,6 +1917,65 @@
                 ]
             }
         },
+        "/transactions": {
+            "post": {
+                "tags": [
+                    "Transactions (Cashier)"
+                ],
+                "summary": "Create new transaction (Stateless)",
+                "operationId": "3a793d45761159f5c7f545d95d5c2e00",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "items",
+                                    "paid_amount"
+                                ],
+                                "properties": {
+                                    "payment_method": {
+                                        "type": "string",
+                                        "example": "cash"
+                                    },
+                                    "paid_amount": {
+                                        "type": "number",
+                                        "example": 50000
+                                    },
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "product_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "qty": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Transaction created"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/products": {
             "get": {
                 "tags": [
@@ -1308,6 +1984,44 @@
                 "summary": "Get all available products",
                 "description": "Retrieve list of products with stock greater than zero",
                 "operationId": "192cd0d03a75f299e9a64d071b74af06",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "price",
+                                "name"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Products retrieved successfully",
@@ -1406,6 +2120,163 @@
                                         },
                                         "data": {
                                             "$ref": "#/components/schemas/User"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/user/profile": {
+            "get": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Get user profile",
+                "description": "Get user profile",
+                "operationId": "9bc706e165cb03a67ca6feed33db6d4a",
+                "responses": {
+                    "200": {
+                        "description": "Profile retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "John Doe"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "format": "email",
+                                                    "example": "john@example.com"
+                                                },
+                                                "role": {
+                                                    "type": "string",
+                                                    "example": "admin"
+                                                },
+                                                "avatar_url": {
+                                                    "type": "string",
+                                                    "example": "http://localhost/uploads/profiles/default.jpg"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/user/change-password": {
+            "post": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Change user password",
+                "description": "Change user password",
+                "operationId": "c5154bcc68da1d0e6e57b6148fc61339",
+                "requestBody": {
+                    "description": "Password change data",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "current_password",
+                                    "new_password",
+                                    "new_password_confirmation"
+                                ],
+                                "properties": {
+                                    "current_password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "oldpassword"
+                                    },
+                                    "new_password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "newpassword"
+                                    },
+                                    "new_password_confirmation": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "newpassword"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password changed successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Password changed successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid current password",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Current password does not match"
                                         }
                                     },
                                     "type": "object"
@@ -1660,6 +2531,29 @@
     },
     "components": {
         "schemas": {
+            "Category": {
+                "title": "Category",
+                "description": "Category model",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "category_name": {
+                        "type": "string",
+                        "example": "Beverages"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
             "Product": {
                 "title": "Product",
                 "description": "Product model",
@@ -1705,6 +2599,104 @@
                     "updated_at": {
                         "type": "string",
                         "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Role": {
+                "title": "Role",
+                "description": "Role model",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "role_name": {
+                        "type": "string",
+                        "example": "admin"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Transaction": {
+                "title": "Transaction",
+                "description": "Transaction model",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "transaction_code": {
+                        "type": "string",
+                        "example": "TRX-123456"
+                    },
+                    "transaction_date": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "total_amount": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 50000
+                    },
+                    "payment_amount": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 50000
+                    },
+                    "change_amount": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 0
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "completed"
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 1
+                    }
+                },
+                "type": "object"
+            },
+            "TransactionDetail": {
+                "title": "Transaction Detail",
+                "description": "Item in a transaction",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "transaction_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "product_id": {
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "quantity": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "price_at_transaction": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 18000
+                    },
+                    "subtotal": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 36000
                     }
                 },
                 "type": "object"
@@ -1773,6 +2765,18 @@
     },
     "tags": [
         {
+            "name": "Admin Categories",
+            "description": "Category management for Admin"
+        },
+        {
+            "name": "Cashier Categories",
+            "description": "Category viewing for Cashier"
+        },
+        {
+            "name": "Admin Dashboard",
+            "description": "Admin Dashboard"
+        },
+        {
             "name": "Products",
             "description": "Products"
         },
@@ -1791,6 +2795,10 @@
         {
             "name": "Cart",
             "description": "Cart"
+        },
+        {
+            "name": "Cashier Dashboard",
+            "description": "Cashier Dashboard"
         },
         {
             "name": "Checkout",

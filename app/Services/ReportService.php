@@ -36,12 +36,16 @@ class ReportService
     /**
      * Summary report (total sales & total transactions)
      */
-    public function getSummary(string $period = 'month', ?string $startDate = null, ?string $endDate = null): array
+    public function getSummary(string $period = 'month', ?string $startDate = null, ?string $endDate = null, ?int $userId = null): array
     {
         [$from, $to] = $this->resolveDateRange($period, $startDate, $endDate);
 
         $query = Transaction::where('status', 'completed')
             ->whereBetween('transaction_date', [$from, $to]);
+
+        if ($userId) {
+            $query->where('user_id', $userId);
+        }
 
         return [
             'total_sales'        => (float) $query->sum('total_amount'),
@@ -81,7 +85,8 @@ class ReportService
     public function getSalesByDate(
         string $period = 'month',
         ?string $startDate = null,
-        ?string $endDate = null
+        ?string $endDate = null,
+        ?int $userId = null
     ) {
         [$from, $to] = $this->resolveDateRange($period, $startDate, $endDate);
 
@@ -101,14 +106,19 @@ class ReportService
             };
         }
 
-        return DB::table('transactions')
+        $query = DB::table('transactions')
             ->selectRaw("
             {$dateExpression} as date,
             SUM(total_amount) as total_sales
         ")
             ->where('status', Transaction::STATUS_COMPLETED)
-            ->whereBetween('transaction_date', [$from, $to])
-            ->groupBy('date')
+            ->whereBetween('transaction_date', [$from, $to]);
+
+        if ($userId) {
+            $query->where('user_id', $userId);
+        }
+
+        return $query->groupBy('date')
             ->orderBy('date')
             ->get();
     }

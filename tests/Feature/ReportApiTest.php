@@ -20,7 +20,7 @@ class ReportApiTest extends TestCase
     public function test_summary_report_with_custom_date_range()
     {
         // 1️⃣ Create role (master data)
-        $adminRole = Role::create([
+        $adminRole = Role::firstOrCreate([
             'role_name' => 'admin',
         ]);
 
@@ -76,7 +76,7 @@ class ReportApiTest extends TestCase
         $response = $this->withHeader(
             'Authorization',
             'Bearer ' . $token
-        )->getJson('/api/reports/summary?start_date=2026-01-01&end_date=2026-01-15');
+        )->getJson('/api/admin/reports/summary?start_date=2026-01-01&end_date=2026-01-15');
 
         // 7️⃣ Assertions
         $response->assertStatus(200)
@@ -92,7 +92,7 @@ class ReportApiTest extends TestCase
     public function test_top_products_report_with_custom_date_range()
     {
         // 1️⃣ Create role & admin
-        $adminRole = \App\Models\Role::create([
+        $adminRole = \App\Models\Role::firstOrCreate([
             'role_name' => 'admin',
         ]);
 
@@ -165,7 +165,7 @@ class ReportApiTest extends TestCase
         $response = $this->withHeader(
             'Authorization',
             'Bearer ' . $token
-        )->getJson('/api/reports/top-products?start_date=2026-01-01&end_date=2026-01-15');
+        )->getJson('/api/admin/reports/top-products?start_date=2026-01-01&end_date=2026-01-15');
 
         // 5️⃣ Assertions
         $response->assertStatus(200)
@@ -183,7 +183,7 @@ class ReportApiTest extends TestCase
     public function test_sales_by_date_report()
     {
         // Role & admin
-        $adminRole = \App\Models\Role::create(['role_name' => 'admin']);
+        $adminRole = \App\Models\Role::firstOrCreate(['role_name' => 'admin']);
 
         $admin = \App\Models\User::create([
             'name' => 'Admin',
@@ -221,7 +221,7 @@ class ReportApiTest extends TestCase
         $response = $this->withHeader(
             'Authorization',
             'Bearer ' . $token
-        )->getJson('/api/reports/sales-by-date?start_date=2026-01-01&end_date=2026-01-31');
+        )->getJson('/api/admin/reports/sales-by-date?start_date=2026-01-01&end_date=2026-01-31');
 
         // Assert
         $response->assertStatus(200)

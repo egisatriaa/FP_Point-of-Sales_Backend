@@ -18,7 +18,7 @@ class AdminProductApiTest extends TestCase
 
     private function createAdminAndToken(): string
     {
-        $role = Role::create(['role_name' => 'admin']);
+        $role = Role::firstOrCreate(['role_name' => 'admin']);
 
         $admin = User::create([
             'name' => 'Admin',

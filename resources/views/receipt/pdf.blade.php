@@ -63,7 +63,8 @@
     <p class="total">
         Total: {{ number_format($receipt['total_amount']) }} <br>
         Bayar: {{ number_format($receipt['payment_amount']) }} <br>
-        Kembalian: {{ number_format($receipt['change_amount']) }}
+        Kembalian: {{ number_format($receipt['change_amount']) }} <br>
+        Metode: {{ ucfirst($receipt['payment_method']) }}
     </p>
 
     <p style="text-align:center;">Terima kasih 🙏</p>

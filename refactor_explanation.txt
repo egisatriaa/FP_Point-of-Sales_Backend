@@ -1,0 +1,73 @@
+PENJELASAN REFACTOR CART (HEADER-DETAIL)
+========================================
+
+1. PERUBAHAN ARSITEKTUR DATABASE
+--------------------------------
+Arsitektur lama (Single Table/Flat):
+- Setiap kali "Add to Cart", baris baru dibuat di tabel `carts`.
+- Tidak ada konsep "Satu Transaksi Utuh" sebelum checkout.
+- Tidak efisien untuk data relational yang kompleks.
+
+Arsitektur Baru (Header-Detail):
+- `carts` (Header): Menyimpan status transaksi ("active") dan pemiliknya (`user_id`). Satu user hanya punya SATU cart aktif.
+- `cart_items` (Detail): Menyimpan list produk yang ada di dalam cart tersebut (`cart_id`, `product_id`), quantity, dan snapshot harga.
+
+2. MIGRATION
+------------
+Saya membuat migration baru `2026_02_06_140000_refactor_carts_table.php` yang akan:
+- Drop tabel `carts` lama.
+- Membuat tabel `carts` baru dengan kolom: `id`, `user_id`, `status`. Update index `(user_id, status)` untuk performa query cepat saat mencari cart aktif.
+- Membuat tabel `cart_items` dengan kolom: `cart_id` (FK), `product_id`, `quantity`, `price` (snapshot). Constraint `unique(cart_id, product_id)` memastikan tidak ada duplikat baris produk yang sama dalam satu cart.
+
+3. MODEL REFACTOR
+-----------------
+- **Cart (Header)**:
+  - Menambahkan relasi `items()` (hasMany CartItem).
+  - Menambahkan Accessor `total_quantity` dan `total_amount` untuk menghitung total secara otomatis tanpa query manual berulang.
+  - Menambahkan Scope `active()` untuk mempermudah filter `where('status', 'active')`.
+
+- **CartItem (Detail)**:
+  - Model baru sebagai representasi pivot table dengan data tambahan.
+  - Menyimpan relasi ke `Product` dan `Cart`.
+  - Mengelola `price_snapshot` (harga saat masuk keranjang).
+
+4. CONTROLLER LOGIC (CartController)
+------------------------------------
+- **store() / Add to Cart**:
+  1. Sistem mencari cart aktif user. Jika tidak ada, buat baru (`firstOrCreate`).
+  2. Sistem mencari apakah produk tersebut sudah ada di `cart_items`.
+  3. Validasi STOCK dilakukan terhadap (Quantity Lama + Quantity Baru).
+  4. Jika produk sudah ada -> Update (Increment) Quantity.
+  5. Jika produk belum ada -> Create Item baru dengan Price Snapshot.
+  
+- **index()**:
+  - Load `Cart` aktif + `items` + `product`.
+  - Response diformat rapi: berisi Info Cart (Header) dan List Items (Detail) dengan subtotal masing-masing.
+
+- **destroy()**:
+  - Menghapus spesifik item dari `cart_items` berdasarkan ID, TANPA menghapus cart headernya.
+  
+- **clear()**:
+  - Menghapus SEMUA item di `cart_items` milik cart aktif. Header tetap dibiarkan ada (kosong).
+
+5. DAMPAK KE POS & FLOW
+-----------------------
+- **POS Flow**: Frontend perlu menyesuaikan response `GET /cart`. Sekarang data produk ada di dalam array `items`, bukan langsung di root array.
+- **Checkout**: Logic checkout nanti harus diubah untuk mengambil data dari `cart_items`, bukan `carts` secara langsung. Ini akan lebih mudah karena `Cart` ID bisa langsung jadi referensi `Transaction`.
+- **Receipt**: Struk tidak berubah karena sumber data struk adalah `Transactions`, bukan `Cart`.
+
+6. SWAGGER UPDATE
+-----------------
+Annotation sudah diupdate di dalam `CartController` untuk merefleksikan perubahan struktur JSON response (Header + Items).
+
+7. VERIFIKASI (Test Plan)
+-------------------------
+1. Jalankan `php artisan migrate:fresh --seed`.
+2. Login sebagai cashier -> dapatkan Token.
+3. Hit `POST /api/cart` dengan Product A (Qty 1). -> Cek DB: 1 Cart Header, 1 Cart Item.
+4. Hit `POST /api/cart` dengan Product A (Qty 1) lagi. -> Cek DB: Cart Item quantity jadi 2.
+5. Hit `POST /api/cart` dengan Product B. -> Cek DB: Cart Item baru muncul.
+6. Hit `GET /api/cart` -> Pastikan JSON ada `items` berisi Product A dan B.
+7. Hit `DELETE /api/cart/{item_id_A}` -> Product A hilang, Product B sisa.
+
+Selesai.

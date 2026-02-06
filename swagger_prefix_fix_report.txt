@@ -1,0 +1,59 @@
+SWAGGER PREFIX FIX REPORT
+=========================
+Date: 2026-02-06
+Project: Point of Sales V2
+Target: Swagger Annotation Paths
+
+ISSUE OVERVIEW
+--------------
+Problem: Swagger annotations included `/api` prefix (e.g., `/api/login`), but Server URL was also `/api`.
+Result: Generated paths were `/api/api/login` (Duplicated).
+Goal: Remove `/api` from annotations to rely on Server URL.
+
+CORRECTIONS APPLIED
+-------------------
+All annotations in `app/Http/Controllers/Api/` have been updated.
+
+1. AuthController:
+   - /api/login -> /login
+   - /api/register -> /register
+   - /api/logout -> /logout
+
+2. ProductController (Admin):
+   - /api/admin/products -> /admin/products
+
+3. CategoryController (Admin):
+   - /api/admin/categories -> /admin/categories
+
+4. ReportController (Admin):
+   - /api/admin/reports/* -> /admin/reports/*
+
+5. TransactionController (Admin):
+   - /api/admin/transactions -> /admin/transactions
+
+6. DashboardController (Admin/Cashier):
+   - /api/admin/dashboard/* -> /admin/dashboard/*
+   - /api/cashier/dashboard/* -> /cashier/dashboard/*
+
+7. Cashier Controllers:
+   - /api/cart -> /cart
+   - /api/checkout -> /checkout
+   - /api/cashier/categories -> /cashier/categories
+   - /api/transactions/my -> /transactions/my
+   - /api/transactions -> /transactions
+
+8. Public/Receipt Controllers:
+   - /api/products -> /products
+   - /api/receipt/* -> /receipt/*
+   - /api/transactions/{id}/receipt -> /transactions/{id}/receipt
+
+VERIFICATION
+------------
+- Commands Executed: `php artisan l5-swagger:generate`
+- Status: Success (Exit Code 0)
+- Resulting Swagger: Paths will now correctly resolve to `/api/{path}` because Server URL adds the single base prefix.
+
+NEXT STEPS
+----------
+- Clear browser cache / Swagger UI cache.
+- Verify endpoints in Swagger UI "Try it out".

@@ -154,9 +154,9 @@ class ProductController extends Controller
     /**
      * Update product
      * 
-     * @OA\Post(
+     * @OA\Put(
      *     path="/admin/products/{id}",
-     *     summary="Update product (Method Spoofing: _method=PUT)",
+     *     summary="Update product",
      *     tags={"Products"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(

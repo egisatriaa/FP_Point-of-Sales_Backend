@@ -1,0 +1,174 @@
+DASHBOARD ROLE COMPARISON REPORT
+================================
+Date: 2026-02-05
+Scope: /api/dashboard vs /api/admin vs /api/transactions
+Language: Bahasa Indonesia
+
+1️⃣ PERBANDINGAN RUTE (ROUTE COMPARISON)
+========================================
+
+Berikut adalah pemetaan rute berdasarkan peran (role) yang ditemukan di `routes/api.php`.
+
+A. SHARED DASHBOARD (Akses: Admin & Cashier)
+--------------------------------------------
+Middleware: `auth:sanctum`, `role:cashier,admin`
+Prefix: `/api/dashboard`
+
+| Method | Endpoint | Controller | Deskripsi |
+| :--- | :--- | :--- | :--- |
+| GET | `/stats` | `DashboardController@stats` | Statistik Ringkasan (Sales, Trx) |
+| GET | `/chart` | `DashboardController@chart` | Grafik Penjualan per Periode |
+| GET | `/recent-sales` | `DashboardController@recentSales` | 5-10 Transaksi Terakhir |
+
+B. ADMIN DASHBOARD & REPORTS (Akses: Admin Only)
+------------------------------------------------
+Middleware: `auth:sanctum`, `role:admin`
+Prefix: `/api/admin`
+
+| Method | Endpoint | Controller | Deskripsi |
+| :--- | :--- | :--- | :--- |
+| GET | `/reports/summary` | `Admin\ReportController@summary` | Sama dengan dashboard/stats |
+| GET | `/reports/top-products` | `Admin\ReportController@topProducts`| Produk Terlaris |
+| GET | `/reports/sales-by-date`| `Admin\ReportController@salesByDate`| Sama dengan dashboard/chart |
+| GET | `/transactions` | `Admin\TransactionController@index` | Semua Riwayat Transaksi |
+
+C. CASHIER OPERATIONAL (Akses: Cashier Only)
+--------------------------------------------
+Middleware: `auth:sanctum`, `role:cashier`
+Prefix: `/api`
+
+| Method | Endpoint | Controller | Deskripsi |
+| :--- | :--- | :--- | :--- |
+| GET | `/transactions/my` | `Kasir\KasirTransactionController@index` | Riwayat Transaksi Kasir Sendiri |
+
+Permasalahan Utama: Endpoint `/api/dashboard/*` dapat diakses oleh Cashier, namun mengembalikan data level Admin.
+
+---
+
+2️⃣ PERBANDINGAN CONTROLLER (CONTROLLER COMPARISON)
+===================================================
+
+A. DashboardController (Shared)
+-------------------------------
+Controller ini digunakan untuk "Dashboard Utama".
+- `stats()`: Memanggil `ReportService::getSummary`
+- `chart()`: Memanggil `ReportService::getSalesByDate`
+- `recentSales()`: Query langsung ke `Transaction` (limit 10)
+
+B. Admin\ReportController (Admin Only)
+--------------------------------------
+Controller khusus laporan admin.
+- `summary()`: Memanggil `ReportService::getSummary` (PERSIS SAMA dengan Dashboard)
+- `salesByDate()`: Memanggil `ReportService::getSalesByDate` (PERSIS SAMA dengan Dashboard)
+
+C. KasirTransactionController (Cashier Only)
+--------------------------------------------
+Controller khusus operasional kasir.
+- Tidak memiliki endpoint statistik/dashboard khusus.
+- Hanya memiliki `index()` untuk list transaksi.
+
+---
+
+3️⃣ PERBEDAAN CAKUPAN DATA (DATA SCOPE DIFFERENCE)
+==================================================
+
+Analisis Query Logic menunjukkan perbedaan signifikan dalam "Filter User":
+
+A. Dashboard (Admin & Cashier) - GLOBAL SCOPE
+---------------------------------------------
+File: `app/Services/ReportService.php` & `DashboardController.php`
+
+Function `getSummary` dan `getSalesByDate`:
+```php
+// ReportService.php
+$query = Transaction::where('status', 'completed')
+    ->whereBetween('transaction_date', [$from, $to]);
+// TIDAK ADA filter where('user_id', ...)
+```
+
+Query `recentSales` di `DashboardController`:
+```php
+$recent = Transaction::with('cashier')
+    ->where('status', Transaction::STATUS_COMPLETED)
+    ->orderByDesc('created_at')
+    ->limit($limit)
+    ->get();
+// TIDAK ADA filter where('user_id', ...)
+```
+❌ TEMUAN: Cashier melihat TOTAL penjualan toko dan transaksi kasir lain.
+
+B. Kasir Transactions - PERSONAL SCOPE
+--------------------------------------
+File: `app/Http/Controllers/Api/Kasir/KasirTransactionController.php`
+
+Function `index`:
+```php
+$query = Transaction::where('user_id', $request->user()->id) // ✅ Filter User
+    ->orderByDesc('transaction_date');
+```
+✅ TEMUAN: Kasir hanya melihat riwayat transaksi miliknya sendiri di menu "Riwayat".
+
+---
+
+4️⃣ PERBEDAAN METRIK (METRICS DIFFERENCE)
+=========================================
+
+| Metrik | Admin Dashboard (Seharusnya) | Cashier Dashboard (Aktual) | Keterangan |
+| :--- | :--- | :--- | :--- |
+| **Total Sales** | Total Toko | Total Toko ⚠️ | Cashier melihat omzet toko |
+| **Total Trx** | Total Toko | Total Toko ⚠️ | Cashier melihat total keramaian toko |
+| **Chart Grafik** | Penjualan Harian Toko | Penjualan Harian Toko ⚠️ | - |
+| **Recent Sales** | Semua Kasir | Semua Kasir ⚠️ | Cashier bisa melihat siapa melayani siapa |
+| **Riwayat Saya** | - | Hanya Milik Sendiri (via `/my`) | Aman |
+
+Dashboard untuk Cashier saat ini **IDENTIK** dengan Dashboard Admin. Tidak ada metrik kinerja personal (misal: "Penjualan Saya Hari Ini") di endpoint `/dashboard/stats`.
+
+---
+
+5️⃣ PENGGUNAAN SERVICE LAYER (SERVICE REUSE)
+============================================
+
+- **ReportService**: Digunakan ulang sepenuhnya (100% Reuse) oleh `DashboardController` dan `Admin\ReportController`.
+- **Logic**: Method `getSummary` dan `getSalesByDate` bersifat agnostik terhadap user (Global Scope).
+- **Dampak**: Reuse ini menyebabkan kebocoran cakupan data karena service tidak menerima parameter `user_id` opsional.
+
+---
+
+6️⃣ KEAMANAN & AKSES KONTROL (SECURITY CHECK)
+=============================================
+
+| Item Check | Status | Catatan |
+| :--- | :--- | :--- |
+| **Authentication** | ✅ Aman | Semua endpoint diproteksi `auth:sanctum`. |
+| **Role Authorization** | ✅ Aman | Middleware `role:cashier,admin` diterapkan dengan benar. |
+| **Endpoint Isolation** | ⚠️ Berisiko | Endpoint Admin (`/reports`) terpisah, tapi endpoint shared (`/dashboard`) membocorkan info. |
+| **Data Governance** | ❌ Gagal | Prinsip "Need to know basis" dilanggar pada Dashboard. |
+
+---
+
+7️⃣ TEMUAN RISIKO & REKOMENDASI (RISK & RECOMMENDATIONS)
+========================================================
+
+🔴 RISIKO TINGGI (High Risk):
+1. **Kebocoran Data Omzet**: Kasir dapat mengetahui total pendapatan harian/bulanan toko melalui dashboard utama.
+2. **Privasi Transaksi**: Kasir dapat melihat transaksi yang diproses oleh kasir lain melalui widget "Recent Sales".
+
+✅ REKOMENDASI PERBAIKAN (Tanpa Refactor, hanya Saran Logic):
+
+1. **Update ReportService**:
+   Tambahkan parameter opsional `?int $userId = null` pada method `getSummary` dan `getSalesByDate`.
+   ```php
+   if ($userId) {
+       $query->where('user_id', $userId);
+   }
+   ```
+
+2. **Update DashboardController**:
+   Deteksi role user saat memanggil service.
+   ```php
+   $userId = $request->user()->hasRole('cashier') ? $request->user()->id : null;
+   $this->reportService->getSummary(..., $userId);
+   ```
+
+3. **Alternatif Cepat**:
+   Batasi akses `/dashboard/*` hanya untuk Admin, dan buat endpoint baru `/cashier/dashboard` yang khusus memanggil data personal.

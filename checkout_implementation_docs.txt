@@ -1,0 +1,47 @@
+PENJELASAN IMPLEMENTASI CHECKOUT (CART-BASED)
+=============================================
+
+1. ARSITEKTUR BARU
+------------------
+Endpoint: `POST /api/checkout`
+Tujuan: Memproses transaksi berdasarkan "Active Cart" user, bukan dari input manual frontend.
+
+2. LOGIC FLOW (CheckoutController@store)
+----------------------------------------
+A. **Validasi Awal**: Cek `paid_amount` dan `payment_method`.
+B. **Cart Retrieval**: Mengambil cart aktif milik kasir yang sedang login. Jika kosong atau tidak ada items -> Error.
+C. **Stock Re-Validation**: Loop semua item di cart untuk memastikan stock masih cukup SAAT KLIK BAYAR. Ini penting untuk mencegah race condition.
+D. **Calculation**: Hitung Total Amount dari (Price Snapshot x Qty) masing-masing item. Price Snapshot menjaga agar harga sesuai saat barang masuk keranjang (anti perubahan harga mendadak).
+E. **DB Transaction (Atomic)**:
+   - Create `Transaction` Header (Status: completed).
+   - Loop Items -> Create `TransactionDetail`.
+   - **Decrement Stock** Product.
+   - **Update Cart Status** -> `completed`. (Cart tidak dihapus record-nya, tapi statusnya selesai jadi tidak muncul lagi di `GET /cart`).
+   
+3. KEAMANAN
+-----------
+- Middleware: `auth:sanctum` dan `role:cashier`. Hanya kasir login yang bisa akses.
+- Database Transaction: Jika salah satu langkah gagal (misal update stock error), SEMUA perubahan di-rollback. Tidak ada data "setengah jadi" (transaksi tercipta tapi stock tidak berkurang).
+
+4. MENGAPA CHECKOUT FROM CART?
+------------------------------
+- **Integritas Data**: Mencegah Frontend memanipulasi harga atau item saat request checkout. Backend memegang kendali penuh atas apa yang dibeli (via Cart).
+- **UX**: User flow natural. Add to cart -> Review Cart -> Checkout.
+- **Traceability**: Kita bisa melacak history "abandoned cart" vs "completed cart" dari tabel `carts`.
+
+5. CARA TEST
+------------
+1. Login Cashier.
+2. `POST /api/cart` (Isi keranjang).
+3. `POST /api/checkout`
+   Body:
+   ```json
+   {
+     "payment_method": "cash",
+     "paid_amount": 100000
+   }
+   ```
+4. Cek Response sukses.
+5. Cek `GET /api/cart` -> Harusnya return "Cart is empty" (karena cart lama sudah completed).
+
+Implementasi selesai dan siap digunakan.

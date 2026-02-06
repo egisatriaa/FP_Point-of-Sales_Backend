@@ -1,0 +1,52 @@
+API Documentation Audit Report
+==============================
+
+Date: 2026-02-05
+Project: Point of Sales V2
+Status: Completed
+
+Overview
+--------
+This report details the process of documenting the API endpoints using OpenAPI (Swagger) annotations.
+The goal was to meticulously document all existing code, ensuring strict compliance with actual controller implementation and routes.
+
+Scope of Work
+-------------
+- Scanned `routes/api.php` to identify all active endpoints.
+- Updated/Created Swagger annotations for:
+  - Auth: Login, Register, Logout.
+  - Profile: Update, Show, ChangePassword.
+  - Admin: Products, Categories (CRUD), Reports (Summary, Top Products, Sales by Date), Transactions (Read-only), Dashboard.
+  - Cashier: Categories (Read), Cart, Checkout (Deprecated), Transactions (My), Dashboard.
+  - Public: Products list, Receipt View, Receipt PDF.
+- Standardized schemas for Models:
+  - User
+  - Product
+  - Category
+  - Transaction
+  - TransactionDetail
+  - Role
+
+Key Actions Taken
+-----------------
+1. **Namespace Refactoring**: Verified all `Kasir` to `Cashier` namespace updates in documentation.
+2. **Path Correction**: Updated all Swagger paths to include `/api` prefix (e.g., `/api/login` instead of `/login`) to match strict route resolution.
+3. **Schema Definition**: Added missing `@OA\Schema` annotations to `Category`, `Transaction`, `TransactionDetail`, and `Role` models to resolve referencing errors.
+4. **Validation Alignment**: Ensured Request Body schemas in `ProductController` and `AuthController` match `FormRequest` validation rules (e.g., `max:255`, `min:8`, `unique`).
+5. **Syntax Repair**: Fixed `@OA\Parameter` syntax in Dashboard controllers where `schema` key was malformed.
+
+Verification
+------------
+- Ran `php artisan l5-swagger:generate`.
+- Result: **Success** (Exit Code 0).
+- No errors or warnings reported in final generation.
+
+Skipped Items
+-------------
+- `UserController`: Not documented because no routes for User Management were found in `routes/api.php`.
+- `TransactionMethodFilter`: Removed from documentation as column does not exist in DB.
+
+Conclusion
+----------
+The API documentation is now comprehensive, accurate, and fully compliant with the codebase state.
+The `openapi.yaml` / `api-docs.json` file is up-to-date and ready for consumption by frontend or mobile teams.

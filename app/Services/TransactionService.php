@@ -105,10 +105,93 @@ class TransactionService
     }
 
     /**
-     * Generate kode transaksi unik
+     * Generate human-readable, date-based, collision-safe transaction code.
+     * Format: TRX-YYYYMMDD-XXXX (e.g., TRX-20260205-A9K3)
+     * Searchable via LIKE query in history endpoint.
      */
     private function generateTransactionCode(): string
     {
-        return 'TRX-' . now()->format('YmdHis') . '-' . Str::upper(Str::random(4));
+        do {
+            $date = now()->format('Ymd');
+            $random = Str::upper(Str::random(4));
+            $code = "TRX-{$date}-{$random}";
+        } while (Transaction::where('transaction_code', $code)->exists());
+
+        return $code;
+    }
+
+    /**
+     * Stateless Transaction Creation
+     * Supports POST /api/transactions with direct items payload
+     */
+    public function createTransaction(int $userId, array $items, float $paymentAmount): Transaction
+    {
+        return DB::transaction(function () use ($userId, $items, $paymentAmount) {
+            $totalAmount = 0;
+            $transactionItems = [];
+
+            // 1. Merge duplicates
+            $mergedItems = [];
+            foreach ($items as $item) {
+                $id = $item['product_id'];
+                if (!isset($mergedItems[$id])) {
+                    $mergedItems[$id] = ['product_id' => $id, 'qty' => 0];
+                }
+                $mergedItems[$id]['qty'] += $item['qty'];
+            }
+
+            // 2. Validate & Lock Products, Calculate Total
+            foreach ($mergedItems as $item) {
+                $product = Product::lockForUpdate()->findOrFail($item['product_id']);
+
+                // Manual check removed as findOrFail throws ModelNotFoundException
+
+                if ($product->stock < $item['qty']) {
+                    throw new BusinessException("Insufficient stock for {$product->product_name}");
+                }
+
+                $subtotal = $product->price * $item['qty'];
+                $totalAmount += $subtotal;
+
+                $transactionItems[] = [
+                    'product_model' => $product, // store model for later
+                    'quantity'      => $item['qty'],
+                    'price'         => $product->price,
+                    'subtotal'      => $subtotal,
+                ];
+            }
+
+            // 2. Validate Payment
+            if ($paymentAmount < $totalAmount) {
+                throw new BusinessException("Payment amount insufficient. Total: {$totalAmount}, Paid: {$paymentAmount}");
+            }
+
+            // 3. Create Transaction
+            $transaction = Transaction::create([
+                'transaction_code' => $this->generateTransactionCode(),
+                'transaction_date' => now(),
+                'total_amount'     => $totalAmount,
+                'payment_amount'   => $paymentAmount,
+                'change_amount'    => $paymentAmount - $totalAmount,
+                'status'           => Transaction::STATUS_COMPLETED,
+                'user_id'          => $userId,
+            ]);
+
+            // 4. Create Details & Update Stock
+            foreach ($transactionItems as $item) {
+                TransactionDetail::create([
+                    'transaction_id'       => $transaction->id,
+                    'product_id'           => $item['product_model']->id,
+                    'quantity'             => $item['quantity'],
+                    'price_at_transaction' => $item['price'],
+                    'subtotal'             => $item['subtotal'],
+                ]);
+
+                // Decrement Stock
+                $item['product_model']->decrement('stock', $item['quantity']);
+            }
+
+            return $transaction;
+        });
     }
 }

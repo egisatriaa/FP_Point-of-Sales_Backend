@@ -26,7 +26,7 @@ use OpenApi\Annotations as OA;
  */
 class Product extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, \Illuminate\Database\Eloquent\Factories\HasFactory;
     protected $fillable = [
         'category_id',
         'sku',

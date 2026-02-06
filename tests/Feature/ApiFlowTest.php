@@ -17,6 +17,12 @@ class ApiFlowTest extends TestCase
 
     public function test_login_api_success()
     {
+        $role = \App\Models\Role::firstOrCreate(['role_name' => 'cashier']);
+        User::firstOrCreate(
+            ['email' => 'cashier@pos.com'],
+            ['name' => 'Cashier', 'password' => \Illuminate\Support\Facades\Hash::make('password'), 'role_id' => $role->id, 'is_active' => true]
+        );
+
         $response = $this->postJson('/api/login', [
             'email' => 'cashier@pos.com',
             'password' => 'password',
@@ -36,10 +42,25 @@ class ApiFlowTest extends TestCase
     public function test_checkout_api_success()
     {
         // 1. Login as Cashier (to get the user)
-        $user = User::where('email', 'cashier@pos.com')->first();
+        $role = \App\Models\Role::firstOrCreate(['role_name' => 'cashier']);
+        $user = User::firstOrCreate(
+            ['email' => 'cashier@pos.com'],
+            ['name' => 'Cashier', 'password' => 'password', 'role_id' => $role->id, 'is_active' => true]
+        );
 
         // 2. Add Item to Cart (Manual simulation since Cart API doesn't exist yet)
         $product = Product::first();
+        if (!$product) {
+             // Create a default category if needed
+             $category = \App\Models\Category::firstOrCreate(['category_name' => 'General']);
+             $product = Product::create([
+                 'category_id' => $category->id,
+                 'sku' => 'TEST-PROD-FLOW',
+                 'product_name' => 'Test Product',
+                 'price' => 50000,
+                 'stock' => 100
+             ]);
+        }
         Cart::create([
             'user_id' => $user->id,
             'product_id' => $product->id,

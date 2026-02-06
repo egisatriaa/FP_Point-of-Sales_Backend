@@ -23,6 +23,7 @@ class ReceiptService
             'total_amount'   => $trx->total_amount,
             'payment_amount' => $trx->payment_amount,
             'change_amount'  => $trx->change_amount,
+            'payment_method' => $trx->payment_method,
         ];
     }
 

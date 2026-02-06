@@ -1,0 +1,19 @@
+# Cashier Testing Report
+Date: 2026-02-05
+Status: PASSED
+
+## Testing Scope
+Validation of Cashier specific workflows including Login, Cart Management, Checkout, and Dashboard visibility.
+
+## Results
+- **Authentication**: Cashier login works (`ApiFlowTest`).
+- **Cart**: Add/Remove/View cart items works (`CashierFlowTest`, `CartApiTest`).
+- **Checkout**: Transaction creation reduces stock and clears cart (`ApiFlowTest`, `StatelessTransactionTest`).
+- **Data Isolation**: Cashier dashboard only shows OWN sales data. Verified by `DashboardScopeTest`.
+- **Security**: Cashier cannot access Admin endpoints (`RoleRestrictionTest`).
+
+## Key Fixes
+- Fixed `UserFactory` and `RoleFactory` interactions to prevent unique constraint crashes.
+- Fixed `UserSeeder` logic to ensure failing tests don't crash the suite.
+
+All Cashier endpoints are functioning correctly under `App\Http\Controllers\Api\Cashier`.

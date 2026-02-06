@@ -1,0 +1,97 @@
+SWAGGER AUDIT REPORT (DETAILED)
+=================================
+Date: 2026-02-06
+Project: Point of Sales V2
+Target: OpenAPI/Swagger Annotations
+
+1. ENDPOINT COVERAGE CHECK
+==========================
+Source of Truth: routes/api.php + RouteServiceProvider (prefix: /api)
+
+✅ Documented & Correctly Routed:
+- /api/admin/products (CRUD)
+- /api/admin/categories (CRUD)
+- /api/admin/reports/summary
+- /api/admin/reports/top-products
+- /api/admin/reports/sales-by-date
+- /api/admin/transactions (Index, Show)
+- /api/admin/dashboard/* (Stats, Chart, Recent)
+- /api/cashier/categories
+- /api/cart (Index, Store, Destroy, Clear)
+- /api/checkout (Deprecated)
+- /api/transactions/my (Index, Show)
+- /api/transactions (Store)
+- /api/cashier/dashboard/*
+- /api/products (Public Index)
+- /api/receipt/* (View, PDF, Link)
+- /api/transactions/{id}/receipt/* (View, PDF)
+- /api/profile
+- /api/user/profile
+- /api/user/change-password
+
+❌ Incorrect Paths (Missing /api prefix):
+- [POST] /login (Should be /api/login) -> in AuthController
+- [POST] /register (Should be /api/register) -> in AuthController
+- [POST] /logout (Should be /api/logout) -> in AuthController
+
+⚠ Missing Documentation:
+- None (User Management deliberately skipped).
+
+2. TAG STRUCTURE CHECK
+======================
+Status: ✅ PASS
+- Tags are well organized by role and function.
+- Clear separation between "Products" (Admin) and "Products Public".
+- Clear separation between "Transactions" (Admin) and "Transactions (Cashier)".
+
+3. QUERY PARAMETER COVERAGE
+===========================
+✅ Admin\ReportController: period, start_date, end_date [Covered]
+✅ Admin\TransactionController: period, start_date, end_date, per_page [Covered]
+✅ ProductPublicController: search, category_id, sort, limit [Covered]
+✅ Admin\DashboardController: period, start_date, end_date, limit [Covered]
+✅ Cashier\DashboardController: period, start_date, end_date, limit [Covered]
+
+❌ KasirTransactionController (GET /api/transactions/my):
+- Missing: `search` (Used for transaction_code filtering)
+- Missing: `date_from` (Used for date range)
+- Missing: `date_to` (Used for date range)
+- Note: `period`, `start_date`, `end_date` are documented but treated as legacy fallback in code.
+
+4. REQUEST BODY VALIDATION MATCH
+================================
+✅ ProductController (Store): Matches rules (required params, file upload).
+✅ ProductController (Update): Note: Uses POST with `_method="PUT"` annotation.
+   - Verification Required: Ensure client actually supports Method Spoofing or `POST` routing is available. `Route::apiResource` uses PUT.
+✅ AuthController (Login/Register): Matches FormRequests.
+✅ CartController (Store): Matches StoreCartRequest.
+✅ KasirTransactionController (Store): Matches StoreTransactionRequest (Items array structure confirmed).
+
+5. RESPONSE STRUCTURE CHECK
+===========================
+Status: ✅ PASS
+- All Controllers use `ApiResponse` trait or `response()->json` with consistent keys:
+  - `success` (bool)
+  - `message` (string)
+  - `data` (mixed)
+- `KasirTransactionController` and `ProductPublicController` correctly include `meta` for pagination.
+
+6. SECURITY ANNOTATION CHECK
+============================
+Status: ✅ PASS
+- Protected endpoints have `security={{"bearerAuth":{}}}`.
+- Public endpoints (Login, Register, Public Products, Public Receipts) do not.
+
+7. SCHEMA ACCURACY CHECK
+========================
+Status: ✅ PASS
+- Models (`User`, `Product`, `Category`, `Transaction`, `TransactionDetail`) have `@OA\Schema` definitions.
+- Fixed in previous pass.
+
+8. PRIORITIZED FIX LIST
+=======================
+1. [CRITICAL] Fix paths in `AuthController.php`. Prepend `/api` to `/login`, `/register`, `/logout`.
+2. [MAJOR] Add missing query parameters (`search`, `date_from`, `date_to`) to `KasirTransactionController::index`.
+3. [MINOR] Verify Method Spoofing behavior for Product Update.
+
+END OF REPORT

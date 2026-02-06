@@ -17,7 +17,7 @@ class CartApiTest extends TestCase
 
     private function createKasirAndToken(): string
     {
-        $role = Role::create(['role_name' => 'cashier']);
+        $role = Role::firstOrCreate(['role_name' => 'cashier']);
 
         $kasir = User::create([
             'name' => 'Kasir Test',

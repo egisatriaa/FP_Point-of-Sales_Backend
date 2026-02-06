@@ -1,0 +1,24 @@
+PENJELASAN ERROR CHECKOUT (500) & FIX
+=====================================
+
+ERROR:
+"Call to a member function toDateTimeString() on null" pada baris 168.
+
+PENYEBAB:
+1. Kode mencoba mengakses `$transaction->created_at->toDateTimeString()`.
+2. Model `Transaction.php` memiliki konfigurasi `public $timestamps = false;`.
+3. Akibatnya, Laravel Eloquent TIDAK otomatis mengisi properti `created_at` pada object `$transaction` yang dikembalikan setelah `create()`, meskipun di database kolom `created_at` terisi (default timestamp). Properti tersebut bernilai `null` di sisi aplikasi.
+
+SOLUSI:
+Saya mengganti:
+`$transaction->created_at->toDateTimeString()`
+menjadi
+`$transaction->transaction_date->toDateTimeString()`
+
+Alasannya:
+- `transaction_date` kita isi secara eksplisit (`now()`) saat `create()`.
+- `transaction_date` sudah di-cast sebagai datetime di Model.
+- Ini menjamin data tanggal selalu ada dan valid.
+
+STATUS:
+Fixed. Silakan coba checkout kembali.

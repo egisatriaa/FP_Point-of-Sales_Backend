@@ -1,0 +1,67 @@
+PENJELASAN REFINEMENT RESPONSE TRANSAKSI
+=========================================
+
+1. TUJUAN
+---------
+Memastikan konsistensi tipe data (Number vs String) dan kelengkapan field (Payment Method) pada response API Transaction.
+
+2. PERUBAHAN YANG DILAKUKAN
+---------------------------
+
+A. Casting Data Type (String -> Number)
+   Saya telah menambahkan casting `(float)` dan `(int)` pada controller berikut:
+   - `CheckoutController::store()`
+   - `KasirTransactionController::index()`
+   - `KasirTransactionController::show()`
+
+   Field yang diubah:
+   - `total_amount` (float)
+   - `payment_amount` (float)
+   - `change_amount` (float)
+   - `items[].price` (float)
+   - `items[].subtotal` (float)
+   - `items[].quantity` (int)
+
+   **Before:** `"total_amount": "150000.00"`
+   **After:** `"total_amount": 150000`
+
+B. Penambahan Field `payment_method`
+   Saya menambahkan field `"payment_method"` pada response JSON.
+   
+   - **Checkout Response**: Mengambil nilai dari input yang divalidasi (`$validated['payment_method']`), karena transaksi baru saja dibuat.
+   - **Transaction Detail**: Mengambil nilai dari Model (`$trx->payment_method`). 
+     *Catatan*: Jika kolom `payment_method` belum ada di database, field ini akan bernilai `null`. Ini sesuai instruksi "Ambil dari Model".
+
+3. FILE YANG DIUBAH
+-------------------
+- `app/Http/Controllers/Api/Cashier/CheckoutController.php`
+- `app/Http/Controllers/Api/Cashier/KasirTransactionController.php`
+
+4. CONTOH RESPONSE BARU (Checkout)
+----------------------------------
+```json
+{
+    "success": true,
+    "message": "Checkout berhasil",
+    "data": {
+        "transaction_id": 105,
+        "cart_id": 12,
+        "transaction_code": "TRX-2026...",
+        "payment_method": "cash",      // <--- New Field
+        "total_amount": 45000,         // <--- Number
+        "paid_amount": 50000,          // <--- Number
+        "change_amount": 5000,         // <--- Number
+        "items": [
+            {
+                "product_id": 1,
+                "product_name": "Kopi",
+                "price": 15000,        // <--- Number
+                "quantity": 3,         // <--- Number
+                "subtotal": 45000      // <--- Number
+            }
+        ]
+    }
+}
+```
+
+Refinement selesai. Response kini lebih ramah untuk Frontend (Next.js) dan konsisten.
