@@ -1,0 +1,88 @@
+LAPORAN REFACTORING BACKEND: CASHIER DASHBOARD
+Tanggal: 07 Februari 2026
+Target Audience: Frontend Developer
+
+RINGKASAN
+Backend telah melakukan update pada 2 endpoint utama Dashboard Kasir untuk menyesuaikan dengan kebutuhan UI desain. Tidak perlu lagi melakukan mapping/transformasi data yang rumit di sisi Frontend.
+
+DETAIL PERUBAHAN & CARA CONSUME
+
+1. STATS CARD ENDPOINT
+-----------------------------
+URL: GET /api/cashier/dashboard/stats
+Auth: Bearer Token
+
+Response Lama:
+{
+    "total_sales": 125000,
+    "total_transactions": 5,
+    ...
+}
+
+Response BARU (SIAP PAKAI):
+{
+    "success": true,
+    "data": {
+        "total_revenue": 125000,      <-- Menggunakan key "revenue" sesuai request
+        "total_transactions": 5,
+        "products_sold": 12,          <-- BARU: Menghitung total item terjual (sum quantity)
+        "from": "2026-02-01...",
+        "to": "2026-02-28..."
+    }
+}
+Mapping Frontend:
+- Revenue Card -> data.total_revenue
+- Transactions Card -> data.total_transactions
+- Products Sold Card -> data.products_sold
+
+2. RECENT SALES ENDPOINT
+-----------------------------
+URL: GET /api/cashier/dashboard/recent-sales?limit=5
+Auth: Bearer Token
+
+Response Lama:
+[
+    {
+        "transaction_code": "...",
+        "total_amount": 50000,
+        "created_at": "2026-02-07T12:00:00"
+    }
+]
+
+Response BARU (SIAP PAKAI):
+{
+    "success": true,
+    "data": [
+        {
+            "transaction_code": "TRX-2026...",
+            "amount": 50000,          <-- Menggunakan key "amount" (bukan total_amount)
+            "cashier_name": "Budi",
+            "time": "12:30",          <-- BARU: Format jam (HH:mm) siap tampil
+            "date": "2026-02-07"
+        },
+        ...
+    ]
+}
+Mapping Frontend:
+- Column "Customer/Code" -> item.transaction_code
+- Column "Amount" -> item.amount
+- Column "Time" -> item.time
+
+3. SALES CHART ENDPOINT
+-----------------------------
+URL: GET /api/cashier/dashboard/chart
+Auth: Bearer Token
+
+Status: TIDAK BERUBAH (Sudah kompatibel)
+Response Format:
+[
+    { "date": "2026-02-01", "total_sales": 150000 },
+    { "date": "2026-02-02", "total_sales": 200000 }
+]
+Mapping Frontend (Recharts):
+- XAxis dataKey -> "date"
+- Bar/Area dataKey -> "total_sales"
+
+KESIMPULAN
+Silakan update hook/component Frontend Anda untuk langsung menggunakan key baru tersebut.
+Tidak perlu logic tambahan untuk menghitung products_sold atau format jam.

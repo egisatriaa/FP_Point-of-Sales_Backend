@@ -136,4 +136,45 @@ class ReportController extends Controller
             )
         );
     }
+
+    /**
+     * @OA\Get(
+     *     path="/admin/reports/top-cashiers",
+     *     summary="Get top performing cashiers",
+     *     tags={"Reports"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="period",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"day", "week", "month", "year"})
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Top cashiers retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean"),
+     *             @OA\Property(property="data", type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="user_id", type="integer"),
+     *                     @OA\Property(property="cashier_name", type="string"),
+     *                     @OA\Property(property="total_transactions", type="integer"),
+     *                     @OA\Property(property="total_sales", type="number")
+     *                 )
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function topCashiers(Request $request)
+    {
+        return $this->success(
+            $this->reportService->getTopCashiers(
+                $request->query('period', 'month'),
+                $request->query('start_date'),
+                $request->query('end_date'),
+                $request->query('limit', 5)
+            )
+        );
+    }
 }

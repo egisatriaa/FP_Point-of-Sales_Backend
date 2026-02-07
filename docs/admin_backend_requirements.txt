@@ -1,0 +1,92 @@
+BACKEND REQUIREMENTS SPECIFICATION: ADMIN MODULE
+Version: 2.0 (Latest)
+Date: 07 Februari 2026
+
+1. GENERAL OVERVIEW
+-----------------------------
+Backend module ini khusus untuk role "Admin" yang bertugas mengelola master data (Produk & Kategori) serta memantau laporan penjualan (Reports & Dashboard).
+
+Akses:
+- Middleware: `auth:sanctum` (Wajib Login).
+- Role Check: `role:admin` (Hanya Admin).
+- Base URL Prefix: `/api/admin`.
+
+2. FITUR UTAMA (CORE FEATURES)
+-----------------------------
+
+A. Product Management (CRUD Produk)
+-----------------------------
+- Create Product:
+  - Input: Name, SKU (Unique), Price (Numeric > 0), Stock (Integer >= 0), Category ID, Image (File).
+  - Validation: Max image size 2MB (jpeg/png).
+  - Logic: Simpan image ke `public/uploads/products`.
+- Read Product:
+  - List: Menampilkan semua produk dengan relasi kategori.
+  - Detail: Menampilkan detail produk.
+- Update Product:
+  - Input: Sama seperti Create, mendukung update partial atau full.
+  - Logic: Hapus gambar lama jika ada upload gambar baru.
+- Delete Product:
+  - Logic: Validasi relasi ke `transaction_details`. JIKA produk pernah terjual, TOLAK request (422 Unprocessable Entity) atau gunakan Soft Delete. JANGAN hapus permanen jika ada histori transaksi.
+
+B. Category Management (CRUD Kategori)
+-----------------------------
+- Create/Update:
+  - Input: Category Name (Unique).
+- Delete:
+  - Logic: Cek apakah kategori memiliki produk (`products` relation). JIKA ada produk, TOLAK request (422). Kategori hanya bisa dihapus jika kosong.
+
+C. Transactions (Riwayat Transaksi)
+-----------------------------
+- Read Only (Admin tidak boleh ubah data transaksi).
+- List:
+  - Pagination (Default 10 items).
+  - Filtering:
+    - By Custom Date Range (`start_date`, `end_date`).
+    - By Period (`day`, `week`, `month`, `year`).
+- Detail:
+  - Menampilkan info transaksi + item details + nama kasir.
+
+D. Reports & Analytics
+-----------------------------
+- Summary Report:
+  - Total Revenue (Total Sales).
+  - Total Transactions.
+  - Total Items Sold (`products_sold`).
+  - Filter Support: Date Range & Period.
+- Top Products:
+  - List produk terlaris diurutkan berdasarkan quantity terjual tertinggi.
+  - Filter Support: Date Range & Period.
+- Sales Chart Data:
+  - Data agregat penjualan per tanggal.
+  - Format: Array of `{ date: "YYYY-MM-DD", total_sales: 150000 }`.
+
+E. Admin Dashboard (Global Scope)
+-----------------------------
+- Menampilkan metrik global (Semua Kasir, Semua Transaksi).
+- Components:
+  - Stats Cards (Revenue, Transactions, Sold).
+  - Sales Chart (Grafik Penjualan).
+  - Recent Sales (5-10 Transaksi Terakhir, status 'completed').
+
+F. Profile & Settings (Shared Feature)
+-----------------------------
+- Edit Profile: Update nama, email, avatar.
+- Change Password: Wajib verifikasi password lama sebelum update password baru.
+
+3. SECURITY REQUIREMENTS
+-----------------------------
+- Authentication menggunakan Laravel Sanctum.
+- Password user disimpan dalam bentuk Hash (Bcrypt).
+- File Upload harus divalidasi MIME Type (image/*) untuk mencegah upload script berbahaya.
+- CORS Policy: Mengizinkan akses dari domain Frontend yang terdaftar.
+
+4. DATABASE CONSTRAINTS
+-----------------------------
+- Foreign Dependencies:
+  - Products -> Categories (category_id).
+  - TransactionDetails -> Products (product_id).
+  - Transactions -> Users (user_id/cashier_id).
+- Integrity:
+  - SKU harus UNIQUE.
+  - Email User harus UNIQUE.

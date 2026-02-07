@@ -50,6 +50,8 @@ class ReportService
         return [
             'total_sales'        => (float) $query->sum('total_amount'),
             'total_transactions' => (int) $query->count(),
+            'products_sold'      => (int) $query->join('transaction_details', 'transactions.id', '=', 'transaction_details.transaction_id')
+                                            ->sum('transaction_details.quantity'),
             'from'               => $from->toDateTimeString(),
             'to'                 => $to->toDateTimeString(),
         ];
@@ -121,5 +123,81 @@ class ReportService
         return $query->groupBy('date')
             ->orderBy('date')
             ->get();
+    }
+
+    /**
+     * Top performers (Cashiers)
+     */
+    public function getTopCashiers(
+        string $period = 'month',
+        ?string $startDate = null,
+        ?string $endDate = null,
+        int $limit = 5
+    ) {
+        [$from, $to] = $this->resolveDateRange($period, $startDate, $endDate);
+
+        return DB::table('transactions')
+            ->join('users', 'users.id', '=', 'transactions.user_id')
+            ->select(
+                'users.id as user_id',
+                'users.name as cashier_name',
+                DB::raw('COUNT(transactions.id) as total_transactions'),
+                DB::raw('SUM(transactions.total_amount) as total_sales')
+            )
+            ->where('transactions.status', 'completed')
+            ->whereBetween('transactions.transaction_date', [$from, $to])
+            ->groupBy('users.id', 'users.name')
+            ->orderByDesc('total_transactions')
+            ->limit($limit)
+            ->get();
+    }
+
+    public function getSalesPerformance(
+        string $period = 'month',
+        ?string $startDate = null,
+        ?string $endDate = null
+    ) {
+        [$from, $to] = $this->resolveDateRange($period, $startDate, $endDate);
+        $driver = DB::getDriverName();
+
+        if ($driver === 'sqlite') {
+            $dateExpression = match ($period) {
+                'year'  => "strftime('%Y-%m', transaction_date)",
+                default => "strftime('%Y-%m-%d', transaction_date)",
+            };
+        } else {
+            $dateExpression = match ($period) {
+                'year'  => "DATE_FORMAT(transaction_date, '%Y-%m')",
+                default => "DATE_FORMAT(transaction_date, '%Y-%m-%d')",
+            };
+        }
+
+        // Get raw data
+        $rawRecords = DB::table('transactions')
+            ->join('users', 'users.id', '=', 'transactions.user_id')
+            ->selectRaw("
+                {$dateExpression} as date,
+                users.name as cashier_name,
+                SUM(total_amount) as total_sales
+            ")
+            ->where('transactions.status', Transaction::STATUS_COMPLETED)
+            ->whereBetween('transaction_date', [$from, $to])
+            ->groupBy('date', 'cashier_name')
+            ->orderBy('date')
+            ->get();
+
+        // Transform data for Recharts (Array of {date, [cashier1]: val, [cashier2]: val})
+        $formatted = [];
+        $dates = $rawRecords->pluck('date')->unique()->values();
+
+        foreach ($dates as $date) {
+            $entry = ['date' => $date];
+            foreach ($rawRecords->where('date', $date) as $record) {
+                $entry[$record->cashier_name] = (float) $record->total_sales;
+            }
+            $formatted[] = $entry;
+        }
+
+        return $formatted;
     }
 }

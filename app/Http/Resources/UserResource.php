@@ -19,6 +19,7 @@ class UserResource extends JsonResource
             'name'       => $this->name,
             'email'      => $this->email,
             'role'       => $this->role->role_name ?? null,
+            'is_active'  => (bool) $this->is_active,
             'avatar_url' => $this->profile_img ? asset($this->profile_img) : null,
             'created_at' => $this->created_at,
         ];

@@ -10,6 +10,7 @@ use App\Models\TransactionDetail;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Services\MidtransService;
 use OpenApi\Annotations as OA;
 
 /**
@@ -73,6 +74,8 @@ class CheckoutController extends Controller
             'paid_amount'    => 'required|numeric|min:0',
         ]);
 
+        $isMidtrans = $validated['payment_method'] === 'midtrans';
+
         $user = $request->user();
 
         // 2. Ambil Active Cart + Items
@@ -104,26 +107,36 @@ class CheckoutController extends Controller
             }
         }
 
-        // 5. Validasi Pembayaran
-        if ($validated['paid_amount'] < $totalAmount) {
+        // 5. Validasi Pembayaran (Skip for Midtrans)
+        if (!$isMidtrans && $validated['paid_amount'] < $totalAmount) {
             return $this->error("Uang pembayaran kurang. Total: {$totalAmount}, Dibayar: {$validated['paid_amount']}", 400);
         }
 
-        $changeAmount = $validated['paid_amount'] - $totalAmount;
+        $changeAmount = $isMidtrans ? 0 : ($validated['paid_amount'] - $totalAmount);
+        
+        // For Midtrans, payment_amount stored is the expected amount
+        $paymentAmount = $validated['paid_amount'];
+        if ($isMidtrans) {
+             $paymentAmount = $totalAmount;
+        }
 
         // 6. DB Transaction (Atomic Process)
-        return DB::transaction(function () use ($user, $cart, $validated, $totalAmount, $changeAmount) {
+        return DB::transaction(function () use ($user, $cart, $validated, $totalAmount, $changeAmount, $paymentAmount, $isMidtrans) {
             try {
+                // Determine initial status
+                $initialStatus = $isMidtrans ? 'pending' : 'completed';
+
                 // A. Create Transaction Header
                 $transaction = Transaction::create([
                     'user_id'          => $user->id,
                     'transaction_code' => 'TRX-' . now()->format('YmdHis') . '-' . strtoupper(uniqid()),
                     'transaction_date' => now(),
                     'total_amount'     => $totalAmount,
-                    'payment_amount'   => $validated['paid_amount'],
+                    'payment_amount'   => $paymentAmount,
                     'change_amount'    => $changeAmount,
                     'payment_method'   => $validated['payment_method'],
-                    'status'           => 'completed',
+                    'status'           => $initialStatus,
+                    'paid_at'          => $isMidtrans ? null : now(),
                 ]);
 
                 // B. Move Items & Deduct Stock
@@ -137,7 +150,7 @@ class CheckoutController extends Controller
                         'subtotal'       => $item->price * $item->quantity
                     ]);
 
-                    // Deduct Stock
+                    // Deduct Stock (Even for pending Midtrans, we reserve stock)
                     $item->product->decrement('stock', $item->quantity);
                 }
 
@@ -146,15 +159,26 @@ class CheckoutController extends Controller
                     'status' => Cart::STATUS_COMPLETED
                 ]);
 
-                // D. Return Response Data
+                // D. Midtrans Integration
+                $snapToken = null;
+                if ($isMidtrans) {
+                    $midtransService = new MidtransService();
+                    $snapToken = $midtransService->createSnapToken($transaction);
+                    
+                    $transaction->update(['snap_token' => $snapToken]);
+                }
+
+                // E. Return Response Data
                 return $this->success([
                     'transaction_id'   => $transaction->id,
                     'cart_id'          => $cart->id,
                     'transaction_code' => $transaction->transaction_code,
                     'payment_method'   => $validated['payment_method'],
+                    'snap_token'       => $snapToken,
                     'total_amount'     => (float) $totalAmount,
-                    'paid_amount'      => (float) $validated['paid_amount'],
+                    'paid_amount'      => (float) $paymentAmount,
                     'change_amount'    => (float) $changeAmount,
+                    'status'           => $initialStatus,
                     'created_at'       => $transaction->transaction_date->toDateTimeString(),
                     'items'            => $cart->items->map(fn($item) => [
                         'product_id'     => $item->product_id,

@@ -168,10 +168,10 @@ class KasirTransactionController extends Controller
 
     /**
      * @OA\Get(
-     *   path="/transactions/my/{id}",
+     *   path="/transactions/my/{id_or_code}",
      *   tags={"Transactions (Cashier)"},
      *   summary="Get cashier transaction detail",
-     *   description="Show detail of a transaction created by the authenticated cashier",
+     *   description="Show detail by ID or Transaction Code",
      *   security={{"bearerAuth":{}}},
      *
      *   @OA\Parameter(
@@ -182,66 +182,44 @@ class KasirTransactionController extends Controller
      *   ),
      *
      *   @OA\Parameter(
-     *     name="id",
+     *     name="id_or_code",
      *     in="path",
      *     required=true,
-     *     @OA\Schema(type="integer")
+     *     @OA\Schema(type="string", description="Transaction ID (int) or Code (string)")
      *   ),
      *   @OA\Response(
-     *   response=200,
-     *   description="Successful response",
-     *   @OA\JsonContent(
-     *     example={
-     *       "success": true,
-     *       "message": "Success",
-     *       "data": {
-     *         "transaction_code": "TRX-20260131212326-XGGJ",
-     *         "transaction_date": "2026-01-31 21:23:26",
-     *         "status": "completed",
-     *         "total_amount": "46000.00",
-     *         "payment_amount": "50000.00",
-     *         "change_amount": "4000.00",
-     *         "items": {
-     *           {
-     *             "product_id": 5,
-     *             "product_name": "Nasi Kuning Spesial",
-     *             "quantity": 2,
-     *             "price": "18000.00",
-     *             "subtotal": "36000.00"
-     *           }
-     *         }
-     *       }
-     *     }
-     *   )
-     * ),
+     *     response=200,
+     *     description="Successful response"
+     *   ),
      *   @OA\Response(
      *     response=403,
      *     description="Forbidden"
      *   ),
      *   @OA\Response(
-     *   response=404,
-     *   description="Transaction not found",
-     *   @OA\JsonContent(
-     *     example={
-     *       "success": false,
-     *       "message": "Transaction not found or access denied"
-     *     }
+     *     response=404,
+     *     description="Transaction not found"
      *   )
      * )
-     * )
      */
-    public function show(int $id, Request $request)
+    public function show($idOrCode, Request $request)
     {
-        $trx = Transaction::with('details.product')
-            ->where('id', $id)
-            ->where('user_id', $request->user()->id)
-            ->first();
+        $query = Transaction::with(['details.product', 'cashier']) // Added 'cashier' relation
+            ->where('user_id', $request->user()->id);
+
+        if (is_numeric($idOrCode)) {
+            $query->where('id', $idOrCode);
+        } else {
+            $query->where('transaction_code', $idOrCode);
+        }
+
+        $trx = $query->first();
 
         if (! $trx) {
             return $this->error('Transaction not found or access denied', 404);
         }
 
         return $this->success([
+            'transaction_id'   => $trx->id,
             'transaction_code' => $trx->transaction_code,
             'transaction_date' => $trx->transaction_date->toDateTimeString(),
             'status'           => $trx->status,
@@ -249,6 +227,8 @@ class KasirTransactionController extends Controller
             'payment_amount'   => (float) $trx->payment_amount,
             'change_amount'    => (float) $trx->change_amount,
             'payment_method'   => $trx->payment_method,
+            'payment_channel'  => $trx->payment_channel, // Added payment_channel
+            'cashier_name'     => $trx->cashier->name ?? 'Unknown', // Added cashier_name
             'items' => $trx->details->map(fn($d) => [
                 'product_id'   => $d->product_id,
                 'product_name' => $d->product->product_name,

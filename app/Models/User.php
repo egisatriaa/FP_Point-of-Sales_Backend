@@ -39,6 +39,10 @@ class User extends Authenticatable
 {
     use HasApiTokens, SoftDeletes, \Illuminate\Database\Eloquent\Factories\HasFactory;
 
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
+
     protected $fillable = [
         'name',
         'email',

@@ -1,0 +1,177 @@
+ADMIN API DOCUMENTATION
+=======================
+Role: Admin
+Authentication: Bearer Token (Sanctum)
+
+BASE URL: /api/admin
+
+1. PRODUCTS
+-----------------------------
+Manage product catalog.
+
+[GET] /api/admin/products
+- Description: List all products.
+- Response:
+  {
+    "success": true,
+    "data": [
+      {
+        "id": 1,
+        "sku": "PROD-001",
+        "product_name": "Espresso",
+        "price": 25000,
+        "stock": 100,
+        "category_id": 1,
+        "img_product": "uploads/products/..."
+      },
+      ...
+    ]
+  }
+
+[POST] /api/admin/products
+- Description: Create a new product.
+- Content-Type: multipart/form-data
+- Body:
+  - category_id (int, required)
+  - sku (string, required, unique)
+  - product_name (string, required)
+  - description (string, optional)
+  - price (numeric, required)
+  - stock (int, required)
+  - image (file, optional, max:2MB)
+- Response (201): Product object.
+
+[GET] /api/admin/products/{id}
+- Description: Get product details.
+- Response: Product object with category.
+
+[PUT] /api/admin/products/{id}
+- Description: Update a product.
+- Content-Type: application/json or multipart/form-data (for image update, use POST with _method=PUT)
+- Body: Same as POST, but method spoofing required for file upload.
+- Response: Updated product object.
+
+[DELETE] /api/admin/products/{id}
+- Description: Delete a product (soft delete or hard delete depending on implementation).
+- Note: Cannot delete if product is used in transactions.
+- Response: { "success": true, "message": "Product deleted" }
+
+2. CATEGORIES
+-----------------------------
+Manage product categories.
+
+[GET] /api/admin/categories
+- Description: List all categories.
+- Response: { "success": true, "data": [...] }
+
+[POST] /api/admin/categories
+- Description: Create a new category.
+- Body: { "category_name": "Food" }
+- Response (201): Category object.
+
+[GET] /api/admin/categories/{id}
+- Description: Get category details.
+
+[PUT] /api/admin/categories/{id}
+- Description: Update a category.
+- Body: { "category_name": "New Name" }
+
+[DELETE] /api/admin/categories/{id}
+- Description: Delete a category.
+- Note: Cannot delete if category has associated products.
+
+3. TRANSACTIONS
+-----------------------------
+View all transactions across the system.
+
+[GET] /api/admin/transactions
+- Description: List paginated transactions.
+- Query Params:
+  - page (int, default: 1)
+  - per_page (int, default: 10)
+  - period (string: day, week, month, year) OR start_date & end_date (YYYY-MM-DD)
+- Response:
+  {
+    "success": true,
+    "data": {
+      "data": [
+        {
+          "transaction_id": 1,
+          "transaction_code": "TRX-...",
+          "total_amount": 50000,
+          "status": "completed",
+          "cashier": "Admin Name"
+        },
+        ...
+      ],
+      "meta": { ...pagination... }
+    }
+  }
+
+[GET] /api/admin/transactions/{id}
+- Description: Get transaction details with items.
+- Response:
+  {
+    "transaction_code": "...",
+    "items": [ ... ],
+    "cashier": { "id": 1, "name": "..." }
+  }
+
+4. REPORTS (ANALYTICS)
+-----------------------------
+Generate sales reports.
+
+[GET] /api/admin/reports/summary
+- Description: Get overall sales summary.
+- Query Params: period, start_date, end_date
+- Response:
+  {
+    "total_sales": 1500000,     <-- Total Revenue
+    "total_transactions": 50,
+    "products_sold": 120,       <-- Total Items Sold
+    "average_transaction": 30000
+    "from": "...",
+    "to": "..."
+  }
+
+[GET] /api/admin/reports/top-products
+- Description: Get top selling products.
+- Query Params: period, start_date, end_date
+- Response: List of products with total_sold and revenue.
+
+[GET] /api/admin/reports/sales-by-date
+- Description: Get sales grouped by date (for charts).
+- Query Params: period (default: month)
+- Response: List of { date, total_sales, total_transactions }.
+
+5. DASHBOARD (GLOBAL SCOPE)
+-----------------------------
+Dashboard widgets for admin home (Global data).
+
+[GET] /api/admin/dashboard/stats
+- Same as Reports Summary.
+- Returns global stats.
+
+[GET] /api/admin/dashboard/chart
+- Same as Sales By Date.
+- Returns global chart data.
+
+[GET] /api/admin/dashboard/recent-sales
+- Description: Get latest completed transactions globally.
+- Query Params: limit (default 10)
+- Response: List of recent transactions with cashier info.
+
+6. PROFILE & SETTINGS
+-----------------------------
+Manage own admin account.
+
+[GET] /api/user/profile
+- Get current admin profile.
+
+[POST] /api/profile
+- Update profile details (Name, Email, Image).
+- Body: multipart/form-data (name, email, image).
+
+[POST] /api/user/change-password
+- Change login password.
+- Body: { "current_password", "new_password", "new_password_confirmation" }

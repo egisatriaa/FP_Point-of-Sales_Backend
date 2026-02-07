@@ -46,6 +46,51 @@ class TransactionReceiptController extends Controller
      *     )
      * )
      */
+    /**
+     * @OA\Get(
+     *     path="/cashier/receipt/{transaction_code}",
+     *     summary="View transaction receipt by Code",
+     *     tags={"Receipts Cashier"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="transaction_code",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Receipt details",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                  @OA\Property(property="transaction_code", type="string"),
+     *                  @OA\Property(property="total_amount", type="number")
+     *             )
+     *         )
+     *     )
+     * )
+     *
+     * Note: Route prefix 'cashier' ensures no conflict with Public 'receipt/{code}'
+     */
+    public function showByCode(string $transactionCode, Request $request)
+    {
+        $trx = Transaction::with(['cashier', 'details.product'])
+            ->where('transaction_code', $transactionCode)
+            ->firstOrFail();
+
+        if ($request->user()->role->role_name === 'cashier') {
+            $this->receiptService->authorizeCashier(
+                $trx,
+                $request->user()->id
+            );
+        }
+
+        return $this->success(
+            $this->receiptService->getByTransaction($trx)
+        );
+    }
+
     public function show(int $id, Request $request)
     {
         $trx = Transaction::with(['cashier', 'details.product'])

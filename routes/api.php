@@ -17,6 +17,9 @@ use App\Http\Controllers\Api\Admin\AdminDashboardController;
 use App\Http\Controllers\Api\Cashier\CashierDashboardController;
 use App\Http\Controllers\Api\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Api\Cashier\CategoryController as CashierCategoryController;
+use App\Http\Controllers\Api\Webhook\MidtransWebhookController;
+use App\Http\Controllers\Api\Admin\UserController;
+use App\Http\Controllers\Api\Admin\RoleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -50,6 +53,13 @@ Route::get('/receipt/{transaction_code}/pdf-link', [PublicReceiptController::cla
 
 /*
 |--------------------------------------------------------------------------
+| Webhooks (Public, Signature Verified)
+|--------------------------------------------------------------------------
+*/
+Route::post('/webhooks/midtrans', [MidtransWebhookController::class, 'handle']);
+
+/*
+|--------------------------------------------------------------------------
 | Protected PDF (Cashier & Admin)
 |--------------------------------------------------------------------------
 */
@@ -73,6 +83,7 @@ Route::middleware(['auth:sanctum', 'role:cashier,admin'])->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth:sanctum', 'role:cashier'])->group(function () {
+// Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('cart', CartController::class)->only(['index', 'store', 'destroy']);
     Route::get('cashier/categories', [CashierCategoryController::class, 'index']);
     Route::delete('cart', [CartController::class, 'clear']);
@@ -87,6 +98,9 @@ Route::middleware(['auth:sanctum', 'role:cashier'])->group(function () {
         Route::get('/chart', [CashierDashboardController::class, 'chart']);
         Route::get('/recent-sales', [CashierDashboardController::class, 'recentSales']);
     });
+    
+    // Receipt by Code (Midtrans Support)
+    Route::get('/receipt/{transaction_code}', [TransactionReceiptController::class, 'showByCode']);
 });
 
 /*
@@ -101,6 +115,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])
         Route::apiResource('categories', AdminCategoryController::class);
         Route::get('/reports/summary', [ReportController::class, 'summary']);
         Route::get('/reports/top-products', [ReportController::class, 'topProducts']);
+        Route::get('/reports/top-cashiers', [ReportController::class, 'topCashiers']);
         Route::get('/reports/sales-by-date', [ReportController::class, 'salesByDate']);
 
         //Admin Transactions (READ ONLY)
@@ -111,8 +126,14 @@ Route::middleware(['auth:sanctum', 'role:admin'])
         Route::prefix('dashboard')->group(function () {
             Route::get('/stats', [AdminDashboardController::class, 'stats']);
             Route::get('/chart', [AdminDashboardController::class, 'chart']);
+            Route::get('/performance', [AdminDashboardController::class, 'performance']);
             Route::get('/recent-sales', [AdminDashboardController::class, 'recentSales']);
         });
+
+        // User Management
+        Route::apiResource('users', UserController::class);
+        Route::patch('/users/{id}/toggle-status', [UserController::class, 'toggleStatus']);
+        Route::get('/roles', [RoleController::class, 'index']);
     });
 
 /*

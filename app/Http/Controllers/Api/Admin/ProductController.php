@@ -41,13 +41,31 @@ class ProductController extends Controller
      * )
      * 
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        // Mutator/Accessor for image URL can be added in Model if needed
-        // For now, we return the path stored in DB
+        $query = Product::with('category');
+
+        // Filter by Category (Scalable via SKU Prefix)
+        if ($request->has('category') && $request->category !== 'all') {
+            $category = strtoupper($request->category);
+            // Handle plural/singular mapping like tools -> TOOL
+            if ($category === 'TOOLS') $category = 'TOOL';
+            
+            $query->where('sku', 'LIKE', $category . '-%');
+        }
+
+        // Filter by Search (Name or SKU)
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('product_name', 'LIKE', "%{$search}%")
+                  ->orWhere('sku', 'LIKE', "%{$search}%");
+            });
+        }
+
         return response()->json([
             'success' => true,
-            'data' => Product::with('category')->orderBy('id')->get(),
+            'data' => $query->orderBy('id', 'desc')->get(),
         ]);
     }
 

@@ -1,0 +1,39 @@
+RENCANA SETUP NOTIFIKASI MIDTRANS (LOCALHOST)
+
+Karena aplikasi Anda berjalan di localhost (komputer sendiri), Midtrans TIDAK BISA mengirim notifikasi langsung ke komputer Anda. Midtrans butuh URL public (online).
+Solusinya: Gunakan **Ngrok** untuk membuat "terowongan" dari internet ke localhost Anda.
+
+IKUTI LANGKAH BERIKUT:
+
+LANGKAH 1: DOWNLOAD & JALANKAN NGROK
+1. Download Ngrok di website resminya (https://ngrok.com/download) jika belum punya.
+2. Buka terminal baru di VS Code atau CMD.
+3. Jalankan perintah ini (asumsi Laravel jalan di port 8000):
+   ngrok http 8000
+4. Akan muncul tampilan seperti ini:
+   Forwarding   https://abcd-123-456.ngrok-free.app -> http://localhost:8000
+5. COPY alamat "https://..." tersebut. Ini adalah URL Public sementara Anda.
+
+LANGKAH 2: SETTING DI MIDTRANS DASHBOARD
+1. Login ke Midtrans Dashboard (Sandbox).
+2. Masuk ke menu: **Settings > Configuration**.
+3. Cari bagian **"Notification URL"**.
+4. Masukkan URL gabungan dari Ngrok + Endpoint Webhook Anda.
+   Format: [URL_NGROK] + /api/webhooks/midtrans
+   
+   Contoh:
+   https://abcd-123-456.ngrok-free.app/api/webhooks/midtrans
+
+5. Klik **Save**.
+   (Untuk "Recurring payment" dan "Account linking" bisa dikosongkan dulu jika tidak dipakai).
+
+LANGKAH 3: TEST NOTIFIKASI
+1. Lakukan transaksi baru di aplikasi Anda (Checkout).
+2. Bayar transaksi tersebut (di Simulator Midtrans).
+3. Cek terminal Ngrok, harusnya ada log muncul "POST /api/webhooks/midtrans 200 OK".
+4. Cek database local Anda, status transaksi harusnya berubah jadi 'completed' (Paid).
+
+CATATAN PENTING:
+- URL Ngrok akan BERUBAH setiap kali Anda mematikan/nyalakan Ngrok (versi free).
+- Jadi setiap kali mau testing notifikasi, Anda harus update URL di Dashboard Midtrans lagi.
+- Untuk Production nanti (Hosting Asli), Anda cukup masukkan domain asli website Anda (misal: https://tokosaya.com/api/webhooks/midtrans).

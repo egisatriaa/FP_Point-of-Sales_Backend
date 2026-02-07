@@ -62,10 +62,16 @@ class AdminDashboardController extends Controller
             $request->query('period', 'month'),
             $request->query('start_date'),
             $request->query('end_date')
-            // No userId = Global Scope
         );
 
-        return $this->success($data);
+        return $this->success([
+            'total_revenue'      => (float) $data['total_sales'],
+            'total_transactions' => (int) $data['total_transactions'],
+            'products_sold'      => (int) $data['products_sold'],
+            'average_transaction' => $data['total_transactions'] > 0 
+                ? (float) ($data['total_sales'] / $data['total_transactions']) 
+                : 0
+        ]);
     }
 
     /**
@@ -74,6 +80,12 @@ class AdminDashboardController extends Controller
      *     summary="Get dashboard chart data (Global)",
      *     tags={"Admin Dashboard"},
      *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="range",
+     *         in="query",
+     *         description="e.g., 7d, 30d",
+     *         @OA\Schema(type="string")
+     *     ),
      *     @OA\Parameter(
      *         name="period",
      *         in="query",
@@ -97,14 +109,34 @@ class AdminDashboardController extends Controller
      */
     public function chart(Request $request)
     {
+        $period = $request->query('period', 'month');
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+
+        if ($request->filled('range')) {
+            $range = $request->query('range');
+            if (preg_match('/^(\d+)d$/', $range, $matches)) {
+                $days = (int) $matches[1];
+                $startDate = now()->subDays($days - 1)->toDateString();
+                $endDate = now()->toDateString();
+                $period = 'day';
+            }
+        }
+
         $data = $this->reportService->getSalesByDate(
-            $request->query('period', 'month'),
-            $request->query('start_date'),
-            $request->query('end_date')
-            // No userId = Global Scope
+            $period,
+            $startDate,
+            $endDate
         );
 
-        return $this->success($data);
+        $mappedData = $data->map(function ($item) {
+            return [
+                'date' => $item->date,
+                'total' => (float) $item->total_sales,
+            ];
+        });
+
+        return $this->success($mappedData);
     }
 
     /**
@@ -128,20 +160,60 @@ class AdminDashboardController extends Controller
     {
         $limit = (int) $request->query('limit', config('pos.dashboard_recent_limit', 10));
 
+        // Fix: Use transaction_date instead of created_at because timestamps are false in model
         $recent = Transaction::with('cashier')
             ->where('status', Transaction::STATUS_COMPLETED)
-            ->orderByDesc('created_at')
+            ->orderByDesc('transaction_date') 
             ->limit($limit)
             ->get()
             ->map(fn($trx) => [
+                'id'               => $trx->transaction_code, // Map transaction_code to id for Frontend
                 'transaction_code' => $trx->transaction_code,
-                'total_amount'     => $trx->total_amount,
+                'total_price'      => (float) $trx->total_amount, // Map total_amount to total_price
                 'cashier_name'     => $trx->cashier->name ?? 'Unknown',
-                'created_at'       => $trx->created_at 
-                    ? $trx->created_at->toIso8601String() 
-                    : $trx->transaction_date->toIso8601String(),
+                'created_at'       => $trx->transaction_date instanceof \Carbon\Carbon 
+                    ? $trx->transaction_date->toIso8601String() 
+                    : \Carbon\Carbon::parse($trx->transaction_date)->toIso8601String(),
             ]);
 
         return $this->success($recent);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/admin/dashboard/performance",
+     *     summary="Get dashboard performance data (Area Chart)",
+     *     tags={"Admin Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="period",
+     *         in="query",
+     *         @OA\Schema(type="string", enum={"day", "week", "month", "year"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="start_date",
+     *         in="query",
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="end_date",
+     *         in="query",
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful response"
+     *     )
+     * )
+     */
+    public function performance(Request $request)
+    {
+        $data = $this->reportService->getSalesPerformance(
+            $request->query('period', 'month'),
+            $request->query('start_date'),
+            $request->query('end_date')
+        );
+
+        return $this->success($data);
     }
 }

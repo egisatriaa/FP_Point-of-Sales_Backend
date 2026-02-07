@@ -67,7 +67,13 @@ class CashierDashboardController extends Controller
             $userId // Filter by current user
         );
 
-        return $this->success($data);
+        return $this->success([
+            'total_revenue'      => $data['total_sales'], // Alias for frontend
+            'total_transactions' => $data['total_transactions'],
+            'products_sold'      => $data['products_sold'], // New metric
+            'from'               => $data['from'],
+            'to'                 => $data['to'],
+        ]);
     }
 
     /**
@@ -141,11 +147,12 @@ class CashierDashboardController extends Controller
             ->get()
             ->map(fn($trx) => [
                 'transaction_code' => $trx->transaction_code,
-                'total_amount'     => $trx->total_amount,
-                'cashier_name'     => $trx->cashier->name ?? 'Unknown',
-                'created_at'       => $trx->created_at 
-                    ? $trx->created_at->toIso8601String() 
-                    : $trx->transaction_date->toIso8601String(),
+                'amount'           => (float) $trx->total_amount, // Alias: amount (ensure float)
+                'cashier_name'     => optional($trx->cashier)->name ?? 'Unknown', // Safe null check
+                'time'             => $trx->created_at 
+                    ? \Carbon\Carbon::parse($trx->created_at)->format('H:i') 
+                    : ($trx->transaction_date ? \Carbon\Carbon::parse($trx->transaction_date)->format('H:i') : '-'), // Fallback 
+                'date'             => $trx->transaction_date ? \Carbon\Carbon::parse($trx->transaction_date)->toDateString() : '-', // Safe date format
             ]);
 
         return $this->success($recent);

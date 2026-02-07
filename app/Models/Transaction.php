@@ -43,6 +43,10 @@ class Transaction extends Model
         'payment_method',
         'status',
         'user_id',
+        'snap_token',
+        'gateway_status',
+        'payment_channel',
+        'paid_at',
     ];
 
     /* ================== RELATION ================== */

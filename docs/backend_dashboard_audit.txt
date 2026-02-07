@@ -1,0 +1,55 @@
+AUDIT REPORT: BACKEND CASHIER DASHBOARD API
+Tanggal Audit: 07 Februari 2026
+File Target: app/Http/Controllers/Api/Cashier/CashierDashboardController.php & app/Services/ReportService.php
+
+STATUS SAAT INI (Backend Current State)
+
+A. Endpoint: /api/cashier/dashboard/stats
+- Status: SUDAH ADA.
+- Method: `CashierDashboardController@stats`
+- Data yang dikembalikan saat ini:
+  - `total_sales` (Float/Double)
+  - `total_transactions` (Integer)
+  - `from` (DateTime String)
+  - `to` (DateTime String)
+- Kekurangan (Gap):
+  - Frontend meminta `products_sold`. Backend BELUM menyediakan ini di method `getSummary` ReportService.
+  - Penamaan field: Backend pakai `total_sales`, Frontend biasanya butuh `total_revenue` (perlu disepakati, tapi isinya sama).
+
+B. Endpoint: /api/cashier/dashboard/chart
+- Status: SUDAH ADA.
+- Method: `CashierDashboardController@chart`
+- Data yang dikembalikan:
+  - Array of Objects: `{ date: "YYYY-MM-DD", total_sales: 150000 }`
+- Logic:
+  - Sudah mendukung filter `period` (day, week, month, year).
+  - Sudah mendukung filter `start_date` & `end_date`.
+- Kekurangan (Gap):
+  - Format data mungkin perlu disesuaikan dengan Recharts di frontend (biasanya Recharts butuh key `name` atau `date` yang konsisten). Saat ini sudah `date` dan `total_sales`, ini seharusnya sudah kompatibel.
+
+C. Endpoint: /api/cashier/dashboard/recent-sales
+- Status: SUDAH ADA.
+- Method: `CashierDashboardController@recentSales`
+- Data yang dikembalikan:
+  - `transaction_code`
+  - `total_amount`
+  - `cashier_name`
+  - `created_at`
+- Kekurangan (Gap):
+  - Frontend meminta field `time` secara spesifik, saat ini dikirim sebagai `created_at` (ISO 8601 String). Frontend harus format ini jadi jam/menit.
+  - Frontend meminta `amount`, Backend kirim `total_amount`. (Hanya beda nama key).
+
+REKOMENDASI PERBAIKAN BACKEND (Action Items)
+
+1.  **Update ReportService@getSummary:**
+    -   Tambahkan query `sum('quantity')` dari tabel `transaction_details` untuk mendapatkan `products_sold`.
+    
+2.  **Update CashierDashboardController@stats:**
+    -   Pastikan response me-return key yang sesuai kebutuhan frontend atau frontend yang menyesuaikan. Rekomendasi: Server kirim `products_sold`.
+
+3.  **Update CashierDashboardController@recentSales:**
+    -   Aliaskan `total_amount` menjadi `amount` agar frontend tidak perlu ubah kode.
+    -   Aliaskan `created_at` -> `time` (atau biarkan frontend format sendiri).
+
+KESIMPULAN
+Backend sudah memiliki infrastruktur dasar (80% Ready). Hanya perlu sedikit penyesuaian di `ReportService` untuk menambahkan metrik `products_sold` dan penyesuaian nama field JSON agar plug-and-play dengan Frontend.
